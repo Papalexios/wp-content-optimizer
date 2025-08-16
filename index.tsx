@@ -867,9 +867,44 @@ const App = () => {
             // 2. Get keyword from AI
             addLog(`🤖 Asking AI for main keyword...`);
             const prompt = `Based on the following blog post title and a snippet of its content, what is the single most important main keyword or keyphrase? Respond with ONLY the keyword/keyphrase.\n\nTitle: ${post.title.rendered}\n\nContent Snippet: ${textContent.substring(0, 800)}`;
-            const ai = new GoogleGenAI({ apiKey: apiKeys.gemini });
-            const aiResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { thinkingConfig: { thinkingBudget: 0 } } });
-            const keyword = aiResponse.text.trim();
+            
+            const apiKey = apiKeys[aiProvider];
+            if (!apiKey) throw new Error(`${aiProvider} API Key is not set.`);
+            
+            let keyword = '';
+
+            if (aiProvider === 'gemini') {
+                const ai = new GoogleGenAI({ apiKey });
+                const aiResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { thinkingConfig: { thinkingBudget: 0 } } });
+                keyword = aiResponse.text.trim();
+            } else if (aiProvider === 'openai' || aiProvider === 'openrouter') {
+                const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
+                if (aiProvider === 'openrouter') {
+                    clientOptions.baseURL = "https://openrouter.ai/api/v1";
+                }
+                const openai = new OpenAI(clientOptions);
+                const model = aiProvider === 'openai' ? 'gpt-4o' : openRouterModel;
+                if (!model) throw new Error("OpenRouter model is not specified.");
+                const aiResponse = await openai.chat.completions.create({ model, messages: [{ role: "user", content: prompt }], max_tokens: 20 });
+                keyword = aiResponse.choices[0].message.content.trim();
+            } else if (aiProvider === 'claude') {
+                const anthropic = new Anthropic({ apiKey });
+                const aiResponse = await anthropic.messages.create({
+                    model: "claude-3-haiku-20240307",
+                    max_tokens: 20,
+                    messages: [{ role: "user", content: prompt }]
+                });
+                const block = aiResponse.content.find(b => b.type === 'text');
+                if (block && block.type === 'text') {
+                    keyword = block.text.trim();
+                } else {
+                    throw new Error("Claude did not return a valid text response.");
+                }
+            }
+
+            if (!keyword) {
+                throw new Error("AI failed to identify a keyword.");
+            }
 
             addLog(`✅ Keyword identified: "${keyword}". Loading content into editor.`);
             dispatch({
@@ -882,7 +917,7 @@ const App = () => {
             addLog(`❌ Error during analysis: ${errorMessage}`);
             dispatch({ type: 'UPDATE_WP_POST_STATUS', payload: { id: post.id, status: 'idle' } });
         }
-    }, [wpUrl, wpUser, wpPassword, apiKeys.gemini, addLog]);
+    }, [wpUrl, wpUser, wpPassword, aiProvider, apiKeys, openRouterModel, addLog]);
     
     const cleanAiResponse = (text) => {
         if (!text) return '';
