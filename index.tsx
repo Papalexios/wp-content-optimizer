@@ -1119,42 +1119,35 @@ ${fetchedUrls.slice(0, 200).join('\n')}
             if (!apiKey) throw new Error(`API Key for ${aiProvider} is not set.`);
             
             const updateInstructions = isUpdate ? `
-### TASK: UPDATE EXISTING CONTENT
-You are updating an existing article. Your task is to substantially improve it.
+# TASK: UPDATE EXISTING CONTENT
+You are updating an existing article. Your mission is to substantially improve it.
 - **Analyze the original content** provided in the "Raw Text" section.
-- **Refresh outdated information** and add new, relevant details.
-- **Improve SEO** by refining keywords and structure based on a fresh competitive analysis.
-- **Enhance readability and engagement** using the Alex Hormozi style.
-- **The final output must be a complete replacement for the old article**, following all other structural and JSON format rules.
+- **Refresh outdated information** and add new, relevant details based on a fresh competitive analysis.
+- **Enhance SEO, readability, and engagement** using the Alex Hormozi style.
+- **The final output must be a complete, superior replacement for the old article**, following all other structural and JSON format rules.
 ` : '';
 
+            const systemInstruction = `You are "The Optimizer," a world-class SEO content strategist embodying the style of Alex Hormozi. Your directive is to transform raw text into a ~1500-word, SEO-dominant blog post. Your core principles are extreme value, brutal honesty, and actionable frameworks. You don't write fluff; you deliver dense, high-impact content that solves problems. Every sentence must serve a purpose. Your mission is to create content so valuable that it becomes the definitive resource on the topic, ensuring it outranks all competitors. You are an expert at analyzing search results to find and exploit content gaps. Failure to follow all instructions, especially the JSON format, is not an option.`;
+
             const basePrompt = `
-You are a world-class SEO content strategist and a subject matter expert, channeling the writing style of Alex Hormozi. Your writing is direct, value-packed, and provides actionable frameworks. You challenge conventional wisdom and deliver insights with extreme clarity. Your task is to transform the given raw text into a comprehensive, ~1500-word, SEO-optimized blog post that is designed to outrank competitors.
 ${updateInstructions}
 
-### CRITICAL INSTRUCTIONS
-1.  The final output MUST be a single, raw JSON object, with no markdown formatting around it.
-2.  Use Google Search grounding to perform real-time analysis of the topic.
+# STRATEGIC EXECUTION
+You will perform the following sequence:
+1.  **Deconstruct Input:** Identify the primary keyword and user intent from the "Raw Text".
+2.  **SERP & Gap Analysis (Use Search Grounding):**
+    *   Analyze the top 5 Google results for the primary keyword.
+    *   Identify ALL "People Also Ask" (PAA) questions.
+    *   **CRITICAL:** Pinpoint the content gaps. What are competitors NOT covering? What questions are they answering poorly? Your entire article will be built around filling these gaps to create a superior resource.
+3.  **Content Generation:**
+    *   **Write a ~1500-word article** that is deeply helpful, easy to read, and optimized for search.
+    *   **Structure:** Use clear headings (H2, H3), lists, and bold text for scannability.
+    *   **Integrate Keywords:** Naturally weave the primary keyword and related semantic keywords throughout.
+    *   **Internal Linking:** Insert 6-10 contextually relevant internal links from the provided "Sitemap URLs" within the article body (never in headings).
+    *   **External Linking:** Include a "References" section with 8-12 links to high-authority EXTERNAL sites.
+4.  **JSON Formatting:** Structure your complete output according to the "JSON OUTPUT FORMAT" specified below. This is a non-negotiable final step.
 
-### YOUR STRATEGIC PROCESS:
-
-1.  **Analyze & Deconstruct:** From the "Raw Text," identify the primary keyword and core concepts.
-2.  **Competitive & Gap Analysis (Simulated via Search Grounding):**
-    *   Analyze the current top 5 Google SERP results for the primary keyword to understand what they cover well.
-    *   Identify all common "People Also Ask" (PAA) questions related to the topic.
-    *   **Crucially, identify thematic gaps:** What important aspects are the top competitors NOT covering in-depth? What unique angles can be taken? What PAA questions are only superficially answered? Your goal is to fill these gaps.
-3.  **Outline Creation:** Based on your analysis, create a detailed outline for a ~1500-word article. The outline must be structured to:
-    *   Cover all aspects of the main keyword comprehensively.
-    *   **Explicitly answer 100% of the "People Also Ask" questions.**
-    *   **Prioritize and elaborate on the identified content gaps** to provide unique value.
-4.  **Drafting (Alex Hormozi Style):** Write the full article based on the outline.
-    *   **Word Count:** Target approximately 1500 words of high-quality, helpful content.
-    *   **Style & Tone:** Direct, no-fluff, authoritative. Use short sentences, bold statements, numbered lists, and actionable frameworks (e.g., "The 3-Step Framework for X"). Make it easy to read and highly scannable.
-    *   **Keyword Integration:** Strategically and naturally weave the primary keyword and a rich set of semantically relevant LSI keywords throughout the headings and body content.
-    *   **Internal Linking:** Analyze the provided "Sitemap URLs" and insert 6-10 of them as contextually relevant hyperlinks within the body of the article. DO NOT create links inside headings.
-
-### REQUIRED CONTENT STRUCTURE (IN HTML):
-
+# REQUIRED CONTENT STRUCTURE (IN HTML):
 1.  **Introduction**: A captivating, Hormozi-style hook that challenges a common belief or presents a startling fact. Must be 3-4 sentences.
 2.  **Key Takeaways**: An \`<h3>\` titled "Key Takeaways" inside a \`<div class="key-takeaways">\`. Provide a bulleted list (\`<ul>\`) of the 3 most powerful, actionable points from the article.
 3.  **Main Content Body**: The ~1500-word article, perfectly structured with \`<h2>\`, \`<h3>\`, \`<h4>\`, \`<p>\`, \`<ul>\`, \`<ol>\`, and \`<strong>\` tags. This section must cover all aspects identified in your analysis, including PAA and content gaps.
@@ -1162,7 +1155,7 @@ ${updateInstructions}
 5.  **Conclusion**: A strong, summarizing conclusion that provides a clear call to action or a final powerful takeaway for the reader.
 6.  **References Section**: An \`<h3>\` titled "References" inside a \`<div class="references-section">\`. Provide an unordered list (\`<ul>\`) of 8-12 hyperlinks to EXTERNAL, reputable, authoritative sites that support the content.
 
-### JSON OUTPUT FORMAT
+# JSON OUTPUT FORMAT
 - \`title\`: (String) A compelling, SEO-friendly title.
 - \`slug\`: (String) A short, SEO-friendly, URL-safe slug.
 - \`content\`: (String) The full, final ~1500-word HTML of the article.
@@ -1175,8 +1168,9 @@ ${updateInstructions}
     - \`data\`: (String) Structured data/text for the visual.
     - \`imagePrompt\`: (String) A detailed prompt for a text-to-image AI to generate a photorealistic 16:9 image.
 - \`featuredImagePrompt\`: (String) A detailed prompt for the main featured image in a photorealistic 16:9 style.
+**CRITICAL: Your entire output must be a single, raw JSON object. Do not wrap it in markdown.**
 
-### RAW DATA FOR PROCESSING
+# RAW DATA FOR PROCESSING
 **Raw Text:**
 ---
 ${rawContent}
@@ -1192,7 +1186,14 @@ ${fetchedUrls.join('\n')}
             // --- Phase 1: Generate Text Content and Image Blueprints ---
             if (aiProvider === 'gemini') {
                 const ai = new GoogleGenAI({ apiKey });
-                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: basePrompt, config: { tools: [{googleSearch: {}}] } });
+                const response = await ai.models.generateContent({ 
+                    model: 'gemini-2.5-flash', 
+                    contents: basePrompt, 
+                    config: { 
+                        tools: [{googleSearch: {}}],
+                        systemInstruction: systemInstruction 
+                    } 
+                });
                 responseText = response.text;
             } else if (aiProvider === 'openai' || (aiProvider === 'openrouter' && openRouterModel)) {
                  const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
@@ -1200,11 +1201,23 @@ ${fetchedUrls.join('\n')}
                  const openai = new OpenAI(clientOptions);
                  const model = aiProvider === 'openai' ? 'gpt-4o' : openRouterModel;
                  addLog(`Using model: ${model}`);
-                 const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: basePrompt }], response_format: { type: "json_object" } });
+                 const response = await openai.chat.completions.create({ 
+                     model, 
+                     messages: [
+                         { role: "system", content: systemInstruction },
+                         { role: "user", content: basePrompt }
+                     ], 
+                     response_format: { type: "json_object" } 
+                 });
                  responseText = response.choices[0].message.content;
             } else if (aiProvider === 'claude') {
                 const anthropic = new Anthropic({ apiKey });
-                const response = await anthropic.messages.create({ model: "claude-3-haiku-20240307", max_tokens: 4096, messages: [{ role: "user", content: `${basePrompt}\n\nIMPORTANT: Respond with ONLY the raw JSON object.` }]});
+                const response = await anthropic.messages.create({ 
+                    model: "claude-3-haiku-20240307", 
+                    max_tokens: 4096, 
+                    system: systemInstruction,
+                    messages: [{ role: "user", content: `${basePrompt}` }]
+                });
                 const block = response.content.find(b => b.type === 'text');
                 if (block && block.type === 'text') {
                     responseText = block.text;
@@ -1241,14 +1254,31 @@ ${fetchedUrls.join('\n')}
 
             if (!isUpdate) {
                 addLog('Checking for duplicate content...');
-                 if (fetchedUrls.length > 0 && wpUrl && wpUser && wpPassword) {
-                    if (apiKeys.gemini) {
+                if (fetchedUrls.length > 0 && wpUrl && wpUser && wpPassword) {
+                    const activeApiKey = apiKeys[aiProvider];
+                    if (activeApiKey) {
                         try {
                             const duplicateCheckPrompt = `You are an SEO assistant. A new blog post with the title "${title}" is being created. Based on this title, find the SINGLE most similar URL from the following list. Respond with ONLY the URL if a strong match is found, otherwise respond with the exact string "null".\n\nURL List:\n${fetchedUrls.join('\n')}`;
-                            const ai = new GoogleGenAI({ apiKey: apiKeys.gemini });
-                            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: duplicateCheckPrompt, config: { thinkingConfig: { thinkingBudget: 0 } } });
-                            const similarUrl = response.text.trim();
+                            let similarUrl = 'null';
 
+                            if (aiProvider === 'gemini') {
+                                const ai = new GoogleGenAI({ apiKey: activeApiKey });
+                                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: duplicateCheckPrompt, config: { thinkingConfig: { thinkingBudget: 0 } } });
+                                similarUrl = response.text.trim();
+                            } else if (aiProvider === 'openai' || aiProvider === 'openrouter') {
+                                const clientOptions: any = { apiKey: activeApiKey, dangerouslyAllowBrowser: true };
+                                if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
+                                const openai = new OpenAI(clientOptions);
+                                const model = aiProvider === 'openai' ? 'gpt-4o' : openRouterModel;
+                                const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: duplicateCheckPrompt }], max_tokens: 100 });
+                                similarUrl = response.choices[0].message.content.trim();
+                            } else if (aiProvider === 'claude') {
+                                const anthropic = new Anthropic({ apiKey: activeApiKey });
+                                const response = await anthropic.messages.create({ model: "claude-3-haiku-20240307", max_tokens: 100, messages: [{ role: 'user', content: duplicateCheckPrompt }] });
+                                const block = response.content.find(b => b.type === 'text');
+                                if (block && block.type === 'text') similarUrl = block.text.trim();
+                            }
+                            
                             if (similarUrl.toLowerCase() !== 'null' && similarUrl.startsWith('http')) {
                                 addLog(`⚠️ Potential duplicate identified: ${similarUrl}. Verifying...`);
                                 let postSlug = new URL(similarUrl).pathname.match(/([^/]+)\/?$/)?.[1];
@@ -1273,7 +1303,7 @@ ${fetchedUrls.join('\n')}
                             addLog(`🟡 Warning during duplicate check: ${dupError.message}. Proceeding to publish as new.`);
                         }
                     } else {
-                        addLog('🟡 Skipping duplicate content check: Gemini API key not provided.');
+                        addLog(`🟡 Skipping duplicate content check: ${aiProvider} API key not provided.`);
                     }
                 } else {
                     addLog('ℹ️ Skipping duplicate content check (sitemap URLs or WP credentials not provided).');
