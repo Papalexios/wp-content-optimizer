@@ -1153,7 +1153,7 @@ You will perform the following sequence:
 3.  **Main Content Body**: The ~1500-word article, perfectly structured with \`<h2>\`, \`<h3>\`, \`<h4>\`, \`<p>\`, \`<ul>\`, \`<ol>\`, and \`<strong>\` tags. This section must cover all aspects identified in your analysis, including PAA and content gaps.
 4.  **Infographics & Image Prompts**: Identify 3-4 key concepts that can be visualized. Insert unique HTML comment placeholders (\`<!-- INFOGRAPHIC-PLACEHOLDER-{UUID} -->\`) where they should appear and create corresponding blueprints in the JSON.
 5.  **Conclusion**: A strong, summarizing conclusion that provides a clear call to action or a final powerful takeaway for the reader.
-6.  **References Section**: An \`<h3>\` titled "References" inside a \`<div class="references-section">\`. Provide an unordered list (\`<ul>\`) of 8-12 hyperlinks to EXTERNAL, reputable, authoritative sites that support the content.
+6.  **References Section**: An \`<h3>\` titled "References" inside a \`<div class="references-section">\`. Provide an unordered list (\`<ul>\`) of 8-12 hyperlinks. **NON-NEGOTIABLE REQUIREMENT - CRITICAL FAILURE CONDITION:** The application you are powering has a link-checker that will programmatically verify every single external link you provide. If any link returns a non-200 status code (e.g., 404 Not Found), your entire response will be rejected and you will have failed the task. You MUST use your search tool to visit and confirm every URL is live before including it. Do not invent URLs. They must be from high-authority, reputable, external sites.
 
 # JSON OUTPUT FORMAT
 - \`title\`: (String) A compelling, SEO-friendly title.
@@ -1233,8 +1233,81 @@ ${fetchedUrls.join('\n')}
                 throw new Error('AI failed to generate a valid JSON response.');
             }
 
-            const { title, content, slug, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = parsedResponse;
+            let { title, content, slug, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = parsedResponse;
             
+             // --- Phase 1.5: Verify and Correct Reference Links ---
+            addLog('🕵️ Verifying reference link validity...');
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(content, 'text/html');
+                const referenceLinks = Array.from(doc.querySelectorAll('.references-section a'));
+
+                if (referenceLinks.length > 0) {
+                    const CORS_PROXY = 'https://corsproxy.io/?';
+                    const linkChecks = referenceLinks.map(link => {
+                        const url = link.getAttribute('href');
+                        if (!url) return Promise.resolve({ url: '', ok: false, status: 0 });
+                        return fetch(`${CORS_PROXY}${encodeURIComponent(url)}`, { method: 'HEAD' })
+                            .then(res => ({ url, ok: res.ok, status: res.status }))
+                            .catch(() => ({ url, ok: false, status: 0 }));
+                    });
+
+                    const results = await Promise.all(linkChecks);
+                    const brokenLinks = results.filter(res => !res.ok).map(res => res.url).filter(Boolean);
+
+                    if (brokenLinks.length > 0) {
+                        addLog(`⚠️ Found ${brokenLinks.length} broken reference links. Asking AI for replacements...`);
+                        addLog(`Broken URLs: ${brokenLinks.join(', ')}`);
+
+                        const correctionPrompt = `You are a link correction specialist. Your task is to find high-quality, relevant, and working replacements for a list of broken URLs for a blog post.\n\n**Blog Post Title:** "${title}"\n\n**Broken URLs:**\n${brokenLinks.map(url => `- ${url}`).join('\n')}\n\n**Instructions:**\n1. For each broken URL, find a new, 100% working, and topically relevant URL from a high-authority domain.\n2. The replacement link MUST lead to a live webpage (HTTP 200 OK).\n3. The content of the new page must be highly relevant to the original (presumably intended) content of the broken link.\n4. Respond with ONLY a raw JSON object mapping the original broken URL to the new, working URL. Do not include any other text, explanations, or markdown.\n\n**JSON Output Format:**\n{\n  "original_broken_url_1": "new_working_url_1",\n  "original_broken_url_2": "new_working_url_2"\n}`;
+                        
+                        let correctionText = '';
+                        if (aiProvider === 'gemini') {
+                            const ai = new GoogleGenAI({ apiKey });
+                            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: correctionPrompt, config: { tools: [{googleSearch: {}}] } });
+                            correctionText = response.text;
+                        } else if (aiProvider === 'openai' || aiProvider === 'openrouter') {
+                            const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
+                            if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
+                            const openai = new OpenAI(clientOptions);
+                            const model = aiProvider === 'openai' ? 'gpt-4o' : openRouterModel;
+                            const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: correctionPrompt }], response_format: { type: "json_object" } });
+                            correctionText = response.choices[0].message.content;
+                        } else if (aiProvider === 'claude') {
+                            const anthropic = new Anthropic({ apiKey });
+                            const response = await anthropic.messages.create({ model: "claude-3-haiku-20240307", max_tokens: 1024, messages: [{ role: "user", content: correctionPrompt }] });
+                            const block = response.content.find(b => b.type === 'text');
+                            if (block?.type === 'text') correctionText = block.text;
+                        }
+
+                        try {
+                            const replacements = JSON.parse(cleanAiResponse(correctionText));
+                            referenceLinks.forEach(link => {
+                                const originalHref = link.getAttribute('href');
+                                if (originalHref && replacements[originalHref]) {
+                                    const newHref = replacements[originalHref];
+                                    addLog(`🔧 Replacing ${originalHref} with ${newHref}`);
+                                    link.setAttribute('href', newHref);
+                                    if (link.textContent === originalHref) {
+                                        link.textContent = newHref;
+                                    }
+                                }
+                            });
+                            content = doc.body.innerHTML;
+                            addLog('✅ All broken links have been replaced.');
+                        } catch(e) {
+                            addLog(`❌ Failed to parse link correction response from AI. Broken links may remain. Raw response: ${correctionText}`);
+                        }
+                    } else {
+                        addLog('✅ All reference links verified and are working.');
+                    }
+                } else {
+                    addLog('ℹ️ No reference links found to verify.');
+                }
+            } catch (verificationError) {
+                addLog(`🟡 Could not verify reference links: ${verificationError.message}. Proceeding with original links.`);
+            }
+
             if (isUpdate) {
                 dispatch({ type: 'SET_DUPLICATE_INFO', payload: { similarUrl: state.postToUpdate.link, postId: state.postToUpdate.id } });
                 dispatch({ type: 'SET_PUBLISH_MODE', payload: 'update' });
