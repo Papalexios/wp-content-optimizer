@@ -292,9 +292,6 @@
             gap: 2rem;
             margin-top: 2rem;
         }
-        @media (max-width: 1024px) {
-            .review-layout { grid-template-columns: 1fr; }
-        }
         .review-panel {
             background: #111827;
             padding: 1.5rem;
@@ -747,6 +744,113 @@
             background-color: var(--primary-color);
         }
 
+        /* Base styles for mobile tabs (hidden on desktop) */
+        .review-tabs { display: none; }
+        .tab-btn {
+            flex: 1;
+            width: 50%;
+            padding: 0.75rem;
+            border: none;
+            background-color: transparent;
+            color: var(--text-light-color);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Post-Publish Actions */
+        .post-publish-actions {
+            max-width: 1200px; /* Match review layout width */
+            margin: 2rem auto 0;
+            padding: 2rem;
+            background-color: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .post-publish-actions h3 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--text-heading-color);
+        }
+
+        @media (max-width: 1024px) {
+            .review-layout { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 0.5rem; }
+            .container { padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            p.subtitle { font-size: 0.95rem; margin-bottom: 2rem; }
+            .progress-step { font-size: 0.8rem; }
+            .button-group { flex-direction: column; }
+            
+            /* Post Ideas Grid */
+            .post-ideas-list { grid-template-columns: 1fr; }
+            
+            /* Content Step Table-to-Card Transformation */
+            .posts-table-wrapper { border: none; }
+            .posts-table thead { display: none; }
+            .posts-table tr {
+                display: block;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                margin-bottom: 1rem;
+                padding: 1rem;
+            }
+            .posts-table tr:hover { background-color: var(--surface-color); }
+            .posts-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.8rem 0;
+                border-bottom: 1px solid var(--border-color);
+                text-align: right;
+            }
+            .posts-table td:last-child { border-bottom: none; }
+            .posts-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--text-light-color);
+                margin-right: 1rem;
+                text-align: left;
+            }
+            .posts-table td:last-child {
+                display: block;
+                padding-top: 1rem;
+            }
+            .posts-table td:last-child .btn { width: 100%; }
+            .posts-table td:last-child::before { display: none; }
+
+            /* Review Step Tabbed Interface */
+            .review-tabs {
+                display: flex;
+                margin-bottom: 1.5rem;
+                background-color: var(--bg-color);
+                border-radius: 8px;
+                padding: 5px;
+                border: 1px solid var(--border-color);
+            }
+            .review-layout { display: block; }
+            .review-panel {
+                max-height: none;
+                padding: 0;
+                border: none;
+                background: transparent;
+            }
+            .review-panel.is-mobile-hidden { display: none; }
+            .review-panel h3 { display: none; }
+            .review-panel-content {
+                overflow-y: visible; /* Let content flow */
+            }
+        }
 
         @keyframes spin {
             to { transform: rotate(360deg); }

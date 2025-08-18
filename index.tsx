@@ -307,15 +307,15 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                                     <tbody>
                                         {filteredPosts.map(post => (
                                             <tr key={post.id}>
-                                                <td><a href={post.link} target="_blank" rel="noopener noreferrer">{post.title.rendered}</a></td>
-                                                <td>
+                                                <td data-label="Title"><a href={post.link} target="_blank" rel="noopener noreferrer">{post.title.rendered}</a></td>
+                                                <td data-label="Date">
                                                     {new Date(post.date).toLocaleDateString('en-US', {
                                                         year: 'numeric',
                                                         month: 'short',
                                                         day: 'numeric',
                                                     })}
                                                 </td>
-                                                <td>
+                                                <td data-label="Keyword">
                                                     {post.status === 'loading' && <div className="keyword-loading-spinner"></div>}
                                                     {post.keyword}
                                                 </td>
@@ -500,7 +500,8 @@ const CopyButton = ({ textToCopy, className = '' }) => {
 };
 
 const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
-    const { finalTitle, slug, finalContent, tags, categories, featuredImage, loading, infographics, duplicateInfo, publishMode } = state;
+    const { finalTitle, slug, finalContent, tags, categories, featuredImage, loading, infographics, duplicateInfo, publishMode, result } = state;
+    const [activeTab, setActiveTab] = useState('editor');
 
     const setField = (field, value) => dispatch({type: 'UPDATE_FINAL_POST', payload: { [field]: value }});
     const setTags = (newTags) => setField('tags', newTags);
@@ -529,17 +530,33 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
         return content;
     }, [finalContent, infographics]);
 
+    const hasPublished = result && result.type === 'success';
+
     return (
         <div id="step-3-review">
-            {duplicateInfo.similarUrl && publishMode === 'update' && (
+            {duplicateInfo.similarUrl && publishMode === 'update' && !hasPublished && (
                  <div className="warning-box">
                     <h4>⚠️ Updating Existing Post</h4>
                     <p>You are about to update an existing article. The new content below will replace the current version on your website.</p>
                     <p><strong>Existing Article:</strong> <a href={duplicateInfo.similarUrl} target="_blank" rel="noopener noreferrer">{duplicateInfo.similarUrl}</a></p>
                 </div>
             )}
+            
+            <div className="review-tabs">
+                <button 
+                    className={`tab-btn ${activeTab === 'editor' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('editor')}>
+                    Editor
+                </button>
+                <button 
+                    className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('preview')}>
+                    Preview
+                </button>
+            </div>
+
             <div className="review-layout">
-                <div className="review-panel">
+                <div className={`review-panel editor-panel ${activeTab !== 'editor' ? 'is-mobile-hidden' : ''}`}>
                     <h3>Editor</h3>
                     <div className="review-panel-content">
                         <div className="form-group">
@@ -597,20 +614,35 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
                         </div>
                     </div>
                 </div>
-                <div className="review-panel">
+                <div className={`review-panel preview-panel ${activeTab !== 'preview' ? 'is-mobile-hidden' : ''}`}>
                     <h3>Live Preview</h3>
                     <div className="review-panel-content live-preview" dangerouslySetInnerHTML={{ __html: renderedContent }} />
                 </div>
             </div>
-            <div className="button-group" style={{maxWidth: '1200px', margin: '2rem auto 0'}}>
-                <button onClick={() => dispatch({type: 'SET_STEP', payload: 2})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Content</button>
-                <button onClick={() => onPostAction(publishMode)} className="btn" disabled={loading.publish}>
-                    {loading.publish 
-                        ? (publishMode === 'update' ? 'Updating...' : 'Publishing...')
-                        : (publishMode === 'update' ? 'Update Existing Post' : 'Publish to WordPress')
-                    }
-                </button>
-            </div>
+
+            {hasPublished ? (
+                <div className="post-publish-actions">
+                    <h3>What's next?</h3>
+                    <div className="button-group">
+                        <button onClick={() => dispatch({type: 'RESET_FOR_NEW_POST'})} className="btn">
+                            Create/Update Another Post
+                        </button>
+                        <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>
+                            Start Over (New Config)
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="button-group" style={{maxWidth: '1200px', margin: '2rem auto 0'}}>
+                    <button onClick={() => dispatch({type: 'SET_STEP', payload: 2})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Content</button>
+                    <button onClick={() => onPostAction(publishMode)} className="btn" disabled={loading.publish}>
+                        {loading.publish 
+                            ? (publishMode === 'update' ? 'Updating...' : 'Publishing...')
+                            : (publishMode === 'update' ? 'Update Existing Post' : 'Publish to WordPress')
+                        }
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -711,6 +743,26 @@ function appReducer(state, action) {
             return { ...state, postToUpdate: null, rawContent: '' };
         case 'SET_POST_IDEAS':
             return { ...state, postIdeas: action.payload };
+        case 'RESET_FOR_NEW_POST':
+            return {
+                ...state,
+                step: 2,
+                loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false },
+                logs: [],
+                result: null,
+                rawContent: '',
+                finalTitle: '',
+                slug: '',
+                finalContent: '',
+                tags: [],
+                categories: [],
+                featuredImage: { prompt: '', base64: '' },
+                infographics: [],
+                duplicateInfo: { similarUrl: null, postId: null },
+                publishMode: 'publish',
+                postToUpdate: null,
+                postIdeas: [],
+            };
         default:
             throw new Error(`Unhandled action type: ${action.type}`);
     }
