@@ -659,12 +659,20 @@
             font-weight: 600;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
         .posts-table tbody tr:last-child td {
             border-bottom: none;
         }
+        .posts-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
         .posts-table tbody tr:hover {
             background-color: #2a3546;
+        }
+        .posts-table tbody tr.selected-post {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            box-shadow: inset 3px 0 0 0 var(--primary-color);
         }
         .posts-table td a {
             color: var(--text-color);
@@ -674,19 +682,22 @@
         .posts-table td a:hover {
             color: var(--primary-color);
         }
-        .selection-locked-box {
-            background-color: rgba(59, 130, 246, 0.1);
-            border: 1px solid var(--primary-color);
-            color: var(--text-color);
-            padding: 1.5rem;
-            border-radius: 8px;
+        
+        /* Meta Description Styles */
+        .form-group .char-counter {
+            text-align: right;
+            font-size: 0.875rem;
+            color: var(--text-light-color);
+            margin-top: 0.5rem;
         }
-        .selection-locked-box h4 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-heading-color);
+        .form-group .char-counter.limit-exceeded {
+            color: var(--error-color);
+            font-weight: 600;
         }
-        .selection-locked-box p {
-            margin: 0;
+        #metaDescription {
+            min-height: 100px;
+            height: 120px;
+            resize: vertical;
         }
 
         /* Post Idea Generator Styles */
@@ -804,6 +815,10 @@
                 border-radius: 8px;
                 margin-bottom: 1rem;
                 padding: 1rem;
+            }
+            .posts-table tr.selected-post {
+                 border-left: 3px solid var(--primary-color);
+                 box-shadow: none;
             }
             .posts-table tr:hover { background-color: var(--surface-color); }
             .posts-table td {

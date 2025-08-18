@@ -252,13 +252,6 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     const [searchTerm, setSearchTerm] = useState('');
 
     const isWpConfigured = useMemo(() => wpUrl && wpUser && wpPassword, [wpUrl, wpUser, wpPassword]);
-
-    const handleModeChange = (newMode) => {
-        if (newMode !== mode) {
-            setMode(newMode);
-            dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
-        }
-    };
     
     const filteredPosts = useMemo(() => {
         if (!wpPosts) return [];
@@ -271,13 +264,6 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                  <div className="warning-box" style={{margin: '0 0 2rem 0'}}>
                     <h4>WordPress Credentials Required</h4>
                     <p>Please provide your WordPress URL, Username, and Application Password in the 'Config' step to load and update existing posts.</p>
-                </div>
-            ) : postToUpdate ? (
-                <div className="selection-locked-box">
-                    <h4>Post Selected for Update</h4>
-                    <p><strong>Title:</strong> {wpPosts.find(p => p.id === postToUpdate.id)?.title.rendered}</p>
-                    <p>The content below has been loaded from this post. You can now proceed to optimize it.</p>
-                    <button onClick={() => dispatch({type: 'CLEAR_UPDATE_SELECTION'})} className="btn" style={{backgroundColor: '#4B5563', width: 'auto', marginTop: '1rem'}}>Select a Different Post</button>
                 </div>
             ) : (
                 <div className="posts-list-container">
@@ -299,27 +285,27 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                                     <thead>
                                         <tr>
                                             <th>Title</th>
-                                            <th>Date</th>
                                             <th>Main Keyword</th>
+                                            <th>Last Updated</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {filteredPosts.map(post => (
-                                            <tr key={post.id}>
+                                            <tr key={post.id} className={post.id === postToUpdate ? 'selected-post' : ''}>
                                                 <td data-label="Title"><a href={post.link} target="_blank" rel="noopener noreferrer">{post.title.rendered}</a></td>
-                                                <td data-label="Date">
-                                                    {new Date(post.date).toLocaleDateString('en-US', {
+                                                <td data-label="Keyword">
+                                                    {post.status === 'loading' && <div className="keyword-loading-spinner"></div>}
+                                                    {post.keyword}
+                                                </td>
+                                                <td data-label="Last Updated">
+                                                    {new Date(post.modified).toLocaleDateString('en-US', {
                                                         year: 'numeric',
                                                         month: 'short',
                                                         day: 'numeric',
                                                     })}
                                                 </td>
-                                                <td data-label="Keyword">
-                                                    {post.status === 'loading' && <div className="keyword-loading-spinner"></div>}
-                                                    {post.keyword}
-                                                </td>
-                                                <td>
+                                                <td data-label="Actions">
                                                     <button 
                                                         onClick={() => onAnalyzeAndSelect(post)} 
                                                         className="btn btn-small"
@@ -338,12 +324,17 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 </div>
             )}
             
-            {postToUpdate && (
-                <div className="form-group" style={{marginTop: '2rem'}}>
-                    <label htmlFor="rawContent">Content from Existing Post</label>
-                    <textarea id="rawContent" value={rawContent} onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'rawContent', value: e.target.value}})} required></textarea>
-                </div>
-            )}
+            <div className="form-group" style={{marginTop: '2rem'}}>
+                <label htmlFor="rawContent">Content from Selected Post</label>
+                <textarea 
+                    id="rawContent" 
+                    value={rawContent} 
+                    onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'rawContent', value: e.target.value}})} 
+                    placeholder={postToUpdate ? "Content is loaded from the selected post above." : "Select a post from the list to load its content for optimization."}
+                    disabled={mode === 'update' && !postToUpdate}
+                    required
+                ></textarea>
+            </div>
         </>
     );
 
@@ -389,8 +380,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     return (
         <div className="step-container" id="step-2-content">
             <div className="content-mode-toggle">
-                <button onClick={() => handleModeChange('new')} className={mode === 'new' ? 'active' : ''}>Create New Post</button>
-                <button onClick={() => handleModeChange('update')} className={mode === 'update' ? 'active' : ''}>Update Existing Post</button>
+                <button onClick={() => setMode('new')} className={mode === 'new' ? 'active' : ''}>Create New Post</button>
+                <button onClick={() => setMode('update')} className={mode === 'update' ? 'active' : ''}>Update Existing Post</button>
             </div>
 
             {mode === 'new' ? renderNewMode() : renderUpdateMode()}
@@ -500,7 +491,7 @@ const CopyButton = ({ textToCopy, className = '' }) => {
 };
 
 const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
-    const { finalTitle, slug, finalContent, tags, categories, featuredImage, loading, infographics, duplicateInfo, publishMode, result } = state;
+    const { finalTitle, slug, metaDescription, finalContent, tags, categories, featuredImage, loading, infographics, duplicateInfo, publishMode, result } = state;
     const [activeTab, setActiveTab] = useState('editor');
 
     const setField = (field, value) => dispatch({type: 'UPDATE_FINAL_POST', payload: { [field]: value }});
@@ -566,6 +557,13 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
                         <div className="form-group">
                             <label htmlFor="finalSlug">SEO Slug</label>
                             <input type="text" id="finalSlug" value={slug} onChange={e => setField('slug', e.target.value)} />
+                        </div>
+                         <div className="form-group">
+                            <label htmlFor="metaDescription">Meta Description (for SEO)</label>
+                            <textarea id="metaDescription" value={metaDescription} onChange={e => setField('metaDescription', e.target.value)} maxLength={160}></textarea>
+                             <p className={`char-counter ${metaDescription.length > 150 ? 'limit-exceeded' : ''}`}>
+                                {metaDescription.length} / 150
+                            </p>
                         </div>
                         <ChipEditor items={tags} setItems={setTags} label="Tags" placeholder="Add a tag..." />
                         <ChipEditor items={categories} setItems={setCategories} label="Categories" placeholder="Add a category..." />
@@ -661,6 +659,7 @@ const initialState = {
     rawContent: '',
     finalTitle: '',
     slug: '',
+    metaDescription: '',
     finalContent: '',
     tags: [],
     categories: [],
@@ -672,8 +671,8 @@ const initialState = {
     openRouterModel: 'google/gemini-2.5-flash',
     duplicateInfo: { similarUrl: null, postId: null },
     publishMode: 'publish', // 'publish' or 'update'
-    wpPosts: [], // { id, title, link, date, keyword, content, status }
-    postToUpdate: null, // { id, link }
+    wpPosts: [], // { id, title, link, date, modified, keyword, content, status }
+    postToUpdate: null, // number | null
     postIdeas: [],
 };
 
@@ -737,7 +736,7 @@ function appReducer(state, action) {
                 ...state,
                 wpPosts: state.wpPosts.map(p => p.id === action.payload.id ? { ...p, keyword: action.payload.keyword, status: 'done' } : p),
                 rawContent: action.payload.content,
-                postToUpdate: { id: action.payload.id, link: action.payload.link },
+                postToUpdate: action.payload.id,
             };
         case 'CLEAR_UPDATE_SELECTION':
             return { ...state, postToUpdate: null, rawContent: '' };
@@ -753,6 +752,7 @@ function appReducer(state, action) {
                 rawContent: '',
                 finalTitle: '',
                 slug: '',
+                metaDescription: '',
                 finalContent: '',
                 tags: [],
                 categories: [],
@@ -774,7 +774,7 @@ const App = () => {
     const {
         sitemapUrl, urlLimit, aiProvider, apiKeys, openRouterModel, rawContent,
         fetchedUrls, wpUrl, wpUser, wpPassword, finalTitle, slug, finalContent,
-        tags, categories, featuredImage, infographics
+        tags, categories, featuredImage, infographics, metaDescription
     } = state;
 
     const addLog = useCallback((message) => dispatch({type: 'ADD_LOG', payload: message}), []);
@@ -874,7 +874,7 @@ const App = () => {
         addLog(`📡 Fetching posts from ${wpUrl}...`);
 
         try {
-            const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts?status=publish&per_page=100&_fields=id,title,link,date`;
+            const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts?status=publish&per_page=100&_fields=id,title,link,date,modified`;
             const credentials = btoa(`${wpUser}:${wpPassword}`);
             const headers = { 'Authorization': `Basic ${credentials}` };
 
@@ -1210,6 +1210,7 @@ You will perform the following sequence:
 # JSON OUTPUT FORMAT
 - \`title\`: (String) A compelling, SEO-friendly title.
 - \`slug\`: (String) A short, SEO-friendly, URL-safe slug.
+- \`metaDescription\`: (String) A compelling, SEO-optimized meta description for SERPs. It must be under 150 characters and use the primary keyword to maximize click-through rate.
 - \`content\`: (String) The full, final ~1500-word HTML of the article.
 - \`tags\`: (Array of strings) 3-5 relevant keyword tags.
 - \`categories\`: (Array of strings) 1-2 relevant categories.
@@ -1285,7 +1286,7 @@ ${fetchedUrls.join('\n')}
                 throw new Error('AI failed to generate a valid JSON response.');
             }
 
-            let { title, content, slug, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = parsedResponse;
+            let { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = parsedResponse;
             
              // --- Phase 1.5: Verify and Correct Reference Links ---
             addLog('🕵️ Verifying reference link validity...');
@@ -1361,14 +1362,18 @@ ${fetchedUrls.join('\n')}
             }
 
             if (isUpdate) {
-                dispatch({ type: 'SET_DUPLICATE_INFO', payload: { similarUrl: state.postToUpdate.link, postId: state.postToUpdate.id } });
-                dispatch({ type: 'SET_PUBLISH_MODE', payload: 'update' });
+                const postToUpdate = state.wpPosts.find(p => p.id === state.postToUpdate);
+                if (postToUpdate) {
+                    dispatch({ type: 'SET_DUPLICATE_INFO', payload: { similarUrl: postToUpdate.link, postId: postToUpdate.id } });
+                    dispatch({ type: 'SET_PUBLISH_MODE', payload: 'update' });
+                }
             }
 
             dispatch({type: 'SET_GENERATED_CONTENT', payload: {
                 finalTitle: title,
                 finalContent: content,
                 slug: slug || '',
+                metaDescription: metaDescription || '',
                 tags: tags || [],
                 categories: categories || [],
                 featuredImage: { prompt: featuredImagePrompt, base64: '' },
@@ -1483,7 +1488,7 @@ ${fetchedUrls.join('\n')}
         dispatch({ type: 'SET_LOADING_STATE', payload: { publish: true } });
 
         const isUpdate = mode === 'update';
-        const { postId } = state.duplicateInfo;
+        const postId = state.postToUpdate || state.duplicateInfo.postId;
 
         if (isUpdate && !postId) {
             const errorMsg = 'Update Error: Missing Post ID. Cannot update.';
@@ -1559,23 +1564,28 @@ ${fetchedUrls.join('\n')}
 
             const resolveTaxonomy = async (endpoint, terms, singularName, pluralName) => {
                 if (!terms || terms.length === 0) return [];
-                addLog(`🏷️ Processing ${pluralName}...`);
-                const termIds = await Promise.all(terms.map(async (termName) => {
-                    const searchResponse = await fetch(`${apiUrl}/${endpoint}?search=${encodeURIComponent(termName)}`, { headers: baseHeaders });
-                    const existingTerms = await searchResponse.json();
-                    const exactMatch = existingTerms.find(t => t.name.toLowerCase() === termName.toLowerCase());
-                    if (exactMatch) return exactMatch.id;
-                    
-                    addLog(`Creating new ${singularName}: "${termName}"...`);
-                    const createResponse = await fetch(`${apiUrl}/${endpoint}`, { method: 'POST', headers: {...baseHeaders, 'Content-Type': 'application/json'}, body: JSON.stringify({ name: termName }) });
-                     if (!createResponse.ok) {
-                         const errorData = await createResponse.json();
-                         throw new Error(`WP Error creating ${singularName}: ${errorData.message || `Failed to create ${termName}`}`);
-                     }
-                    const newTerm = await createResponse.json();
-                    return newTerm.id;
-                }));
-                return termIds.filter(id => id != null);
+                addLog(`🏷️ Resolving existing ${pluralName}...`);
+
+                const response = await fetch(`${apiUrl}/${endpoint}?per_page=100&_fields=id,name`, { headers: baseHeaders });
+                if (!response.ok) {
+                    addLog(`⚠️ Could not fetch existing ${pluralName}. Skipping taxonomy assignment.`);
+                    return [];
+                }
+                const existingTerms = await response.json();
+                const existingTermsMap = new Map(existingTerms.map(term => [term.name.toLowerCase(), term.id]));
+
+                const termIds = [];
+                for (const termName of terms) {
+                    const termId = existingTermsMap.get(termName.toLowerCase());
+                    if (termId) {
+                        termIds.push(termId);
+                    } else {
+                        addLog(`⚠️ Skipping non-existent ${singularName}: "${termName}". Please create it in WordPress first if needed.`);
+                    }
+                }
+                
+                addLog(`Found ${termIds.length} matching ${pluralName}.`);
+                return termIds;
             };
 
             const [tagIds, categoryIds] = await Promise.all([
@@ -1590,6 +1600,7 @@ ${fetchedUrls.join('\n')}
                 slug: slug,
                 content: finalPostContent,
                 status: 'publish',
+                excerpt: metaDescription,
                 tags: tagIds,
                 categories: categoryIds,
                 ...(featuredMediaId && { featured_media: featuredMediaId })
@@ -1615,7 +1626,7 @@ ${fetchedUrls.join('\n')}
         } finally {
             dispatch({ type: 'SET_LOADING_STATE', payload: { publish: false } });
         }
-    }, [wpUrl, wpUser, wpPassword, finalTitle, slug, finalContent, tags, categories, featuredImage, infographics, state.duplicateInfo, addLog]);
+    }, [wpUrl, wpUser, wpPassword, finalTitle, slug, metaDescription, finalContent, tags, categories, featuredImage, infographics, state.duplicateInfo, state.postToUpdate, addLog]);
 
     const renderStep = () => {
         switch (state.step) {
