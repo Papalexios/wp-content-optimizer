@@ -81,16 +81,16 @@ const ApiKeyValidator = ({ status }) => {
 };
 
 
-const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey }) => {
-    const { wpUrl, wpUser, wpPassword, sitemapUrl, urlLimit, loading, aiProvider, apiKeys, openRouterModel, keyStatus } = state;
+const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWpConnection }) => {
+    const { wpUrl, wpUser, wpPassword, sitemapUrl, urlLimit, loading, aiProvider, apiKeys, openRouterModel, keyStatus, wpConnectionStatus, wpConnectionError, wpUserRoles } = state;
     const isSitemapConfigValid = useMemo(() => sitemapUrl && sitemapUrl.trim() !== '', [sitemapUrl]);
     
     const isApiKeyValid = useMemo(() => {
-        // A key is valid enough to proceed if it has been entered and has not been marked as invalid.
-        // This provides a more responsive feel, allowing the user to proceed while validation runs.
         const keyIsEntered = apiKeys[aiProvider] && apiKeys[aiProvider].trim() !== '';
         return keyIsEntered && keyStatus[aiProvider] !== 'invalid';
     }, [apiKeys, aiProvider, keyStatus]);
+
+    const isWpConfigured = useMemo(() => wpUrl && wpUser && wpPassword, [wpUrl, wpUser, wpPassword]);
 
     const [saveConfig, setSaveConfig] = useState(false);
 
@@ -170,6 +170,30 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey }) => {
         dispatch({ type: 'UPDATE_FIELD', payload: { field: e.target.id, value: e.target.value } });
     };
 
+    const renderConnectionStatus = () => {
+        if (wpConnectionStatus === 'idle') return null;
+        
+        const isLowPermissionRole = wpUserRoles.length > 0 && !wpUserRoles.includes('administrator') && !wpUserRoles.includes('editor');
+
+        return (
+            <div className={`connection-status ${wpConnectionStatus}`}>
+                {wpConnectionStatus === 'verifying' && <p>Verifying connection...</p>}
+                {wpConnectionStatus === 'error' && <p><strong>Connection Failed:</strong> {wpConnectionError}</p>}
+                {wpConnectionStatus === 'success' && (
+                    <>
+                        <p>✅ <strong>Connection successful.</strong> Role(s): {wpUserRoles.join(', ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                        {isLowPermissionRole && (
+                            <p className="role-warning">
+                                Your '{wpUserRoles[0]}' role may have limitations (e.g., unable to upload images or edit others' posts). An 'Editor' or 'Administrator' role is recommended for full functionality.
+                            </p>
+                        )}
+                    </>
+                )}
+            </div>
+        );
+    };
+
+
     return (
         <div className="step-container" id="step-1-config">
             <fieldset className="config-fieldset">
@@ -187,6 +211,12 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey }) => {
                     <input type="password" id="wpPassword" value={wpPassword} onChange={handleChange} placeholder="xxxx xxxx xxxx xxxx" required />
                     <p className="help-text">Generate this in your WP admin under Users &gt; Profile &gt; Application Passwords. This password is never stored.</p>
                 </div>
+                <div className="form-group">
+                    <button onClick={onVerifyWpConnection} className="btn" style={{backgroundColor: '#4B5563', width: 'auto'}} disabled={loading.wpConnection || !isWpConfigured}>
+                        {loading.wpConnection ? 'Verifying...' : 'Verify Connection'}
+                    </button>
+                </div>
+                {renderConnectionStatus()}
             </fieldset>
 
             <fieldset className="config-fieldset">
@@ -239,10 +269,10 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey }) => {
             </div>
             {saveConfig && <button onClick={handleClearConfig} className="btn" style={{backgroundColor: '#4B5563', marginTop: '1rem', width: 'auto'}}>Clear Saved Config</button>}
             <div className="button-group" style={{marginTop: '1.5rem'}}>
-                <button onClick={() => onFetchSitemap(false)} className="btn" style={{backgroundColor: '#4B5563'}} disabled={loading.sitemap || !isApiKeyValid}>
+                <button onClick={() => onFetchSitemap(false)} className="btn" style={{backgroundColor: '#4B5563'}} disabled={loading.sitemap || !isApiKeyValid || wpConnectionStatus !== 'success'}>
                     Proceed without Sitemap
                 </button>
-                <button onClick={() => onFetchSitemap(true)} className="btn" disabled={loading.sitemap || !isSitemapConfigValid || !isApiKeyValid}>
+                <button onClick={() => onFetchSitemap(true)} className="btn" disabled={loading.sitemap || !isSitemapConfigValid || !isApiKeyValid || wpConnectionStatus !== 'success'}>
                     {loading.sitemap ? 'Fetching...' : 'Fetch Sitemap & Proceed'}
                 </button>
             </div>
@@ -251,19 +281,39 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey }) => {
 };
 
 const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAnalyzeAndSelect, onGeneratePostIdeas }) => {
-    const { rawContent, loading, wpPosts, postToUpdate, wpUrl, wpUser, wpPassword, fetchedUrls, postIdeas } = state;
-    const [mode, setMode] = useState('new');
+    const { rawContent, loading, wpPosts, postToUpdate, wpConnectionStatus, postIdeas } = state;
+    const [activeView, setActiveView] = useState('welcome'); // 'welcome', 'new', 'edit'
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'modified', direction: 'ascending' });
     const [hideUpdated, setHideUpdated] = useState(false);
 
-    const isWpConfigured = useMemo(() => wpUrl && wpUser && wpPassword, [wpUrl, wpUser, wpPassword]);
+    useEffect(() => {
+        if (postToUpdate) {
+            setActiveView('edit');
+        }
+    }, [postToUpdate]);
     
+    const handleCreateNewClick = () => {
+        dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+        setActiveView('new');
+    };
+
+    const handlePostRowClick = (post) => {
+        if (!post.canEdit || post.status === 'loading' || post.id === postToUpdate) return;
+        onAnalyzeAndSelect(post);
+    };
+    
+    const getPostStatus = (post) => {
+        if (!post.canEdit) return { icon: '🔒', sort: 4, label: 'Locked' };
+        if (post.id === postToUpdate) return { icon: '✏️', sort: 0, label: 'Editing' };
+        if (post.updatedInSession) return { icon: '✅', sort: 2, label: 'Updated' };
+        return { icon: '📝', sort: 1, label: 'Not Touched' };
+    };
+
     const sortedAndFilteredPosts = useMemo(() => {
         if (!wpPosts) return [];
         let modifiablePosts = [...wpPosts];
 
-        // Filtering
         if (hideUpdated) {
             modifiablePosts = modifiablePosts.filter(post => !post.updatedInSession);
         }
@@ -271,31 +321,38 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
             modifiablePosts = modifiablePosts.filter(post => post.title.rendered.toLowerCase().includes(searchTerm.toLowerCase()));
         }
 
-        // Sorting
-        if (sortConfig.key !== null) {
+        if (sortConfig.key) {
             modifiablePosts.sort((a, b) => {
-                let aValue = a[sortConfig.key];
-                let bValue = b[sortConfig.key];
+                let aValue, bValue;
 
-                if (sortConfig.key === 'title') {
-                    aValue = a.title.rendered.toLowerCase();
-                    bValue = b.title.rendered.toLowerCase();
-                } else if (sortConfig.key === 'modified') {
-                    aValue = new Date(a.modified).getTime();
-                    bValue = new Date(b.modified).getTime();
+                switch(sortConfig.key) {
+                    case 'status':
+                        aValue = getPostStatus(a).sort;
+                        bValue = getPostStatus(b).sort;
+                        break;
+                    case 'title':
+                        aValue = a.title.rendered.toLowerCase();
+                        bValue = b.title.rendered.toLowerCase();
+                        break;
+                    case 'keyword':
+                        aValue = a.keyword?.toLowerCase() || '';
+                        bValue = b.keyword?.toLowerCase() || '';
+                        break;
+                    case 'modified':
+                        aValue = new Date(a.modified).getTime();
+                        bValue = new Date(b.modified).getTime();
+                        break;
+                    default:
+                        return 0;
                 }
 
-                if (aValue < bValue) {
-                    return sortConfig.direction === 'ascending' ? -1 : 1;
-                }
-                if (aValue > bValue) {
-                    return sortConfig.direction === 'ascending' ? 1 : -1;
-                }
+                if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
                 return 0;
             });
         }
         return modifiablePosts;
-    }, [wpPosts, searchTerm, sortConfig, hideUpdated]);
+    }, [wpPosts, searchTerm, sortConfig, hideUpdated, postToUpdate]);
     
     const requestSort = (key) => {
         let direction = 'ascending';
@@ -305,119 +362,20 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         setSortConfig({ key, direction });
     };
 
-    const getSortClassName = (name) => {
-        if (!sortConfig.key || sortConfig.key !== name) {
-            return 'sortable';
-        }
-        return `sortable active ${sortConfig.direction}`;
+    const getSortIndicator = (key) => {
+        if (sortConfig.key !== key) return null;
+        return sortConfig.direction === 'ascending' ? '🔼' : '🔽';
     };
-
-    const SortIndicator = ({ columnKey }) => {
-        if (sortConfig.key !== columnKey) return <span className="sort-indicator">↕</span>;
-        return <span className="sort-indicator">{sortConfig.direction === 'ascending' ? '▲' : '▼'}</span>;
-    };
-
-    const renderUpdateMode = () => (
-        <>
-            {!isWpConfigured ? (
-                 <div className="warning-box" style={{margin: '0 0 2rem 0'}}>
-                    <h4>WordPress Credentials Required</h4>
-                    <p>Please provide your WordPress URL, Username, and Application Password in the 'Config' step to load and update existing posts.</p>
-                </div>
-            ) : (
-                <div className="posts-list-container">
-                    {wpPosts.length === 0 ? (
-                        <button onClick={onFetchWpPosts} className="btn" disabled={loading.posts || !isWpConfigured}>
-                            {loading.posts ? 'Loading Posts...' : 'Load Published Posts'}
-                        </button>
-                    ) : (
-                        <>
-                            <div className="posts-filter-controls">
-                                <input
-                                    type="text"
-                                    placeholder="Search posts by title..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="posts-search-input"
-                                />
-                                <div className="checkbox-group">
-                                    <input type="checkbox" id="hideUpdated" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
-                                    <label htmlFor="hideUpdated">Hide posts marked as done</label>
-                                </div>
-                            </div>
-                            <div className="posts-table-wrapper">
-                                <table className="posts-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Done</th>
-                                            <th onClick={() => requestSort('title')} className={getSortClassName('title')}>
-                                                Title <SortIndicator columnKey="title" />
-                                            </th>
-                                            <th>Keyword</th>
-                                            <th onClick={() => requestSort('modified')} className={getSortClassName('modified')}>
-                                                Last Updated <SortIndicator columnKey="modified" />
-                                            </th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {sortedAndFilteredPosts.map(post => (
-                                            <tr key={post.id} className={`${post.id === postToUpdate ? 'selected-post' : ''} ${post.updatedInSession ? 'updated-in-session' : ''}`}>
-                                                <td data-label="Done">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="done-checkbox"
-                                                        checked={post.updatedInSession} 
-                                                        onChange={() => dispatch({type: 'TOGGLE_POST_UPDATED_STATUS', payload: {id: post.id}})}
-                                                        title={post.updatedInSession ? 'Mark as not done' : 'Mark as done'}
-                                                    />
-                                                </td>
-                                                <td data-label="Title" className="title-cell"><a href={post.link} target="_blank" rel="noopener noreferrer">{post.title.rendered}</a></td>
-                                                <td data-label="Keyword">
-                                                    {post.status === 'loading' && <div className="keyword-loading-spinner"></div>}
-                                                    {post.keyword}
-                                                </td>
-                                                <td data-label="Last Updated">
-                                                    {new Date(post.modified).toLocaleDateString('en-US', {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                    })}
-                                                </td>
-                                                <td data-label="Actions">
-                                                    <button 
-                                                        onClick={() => onAnalyzeAndSelect(post)} 
-                                                        className="btn btn-small"
-                                                        disabled={post.status === 'loading' || post.updatedInSession}
-                                                    >
-                                                        {post.updatedInSession ? 'Updated' : (post.status === 'loading' ? 'Analyzing...' : 'Analyze & Select')}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </>
-                    )}
-                </div>
-            )}
-            
-            <div className="form-group" style={{marginTop: '2rem'}}>
-                <label htmlFor="rawContent">Content from Selected Post</label>
-                <textarea 
-                    id="rawContent" 
-                    value={rawContent} 
-                    onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'rawContent', value: e.target.value}})} 
-                    placeholder={postToUpdate ? "Content is loaded from the selected post above." : "Select a post from the list to load its content for optimization."}
-                    disabled={mode === 'update' && !postToUpdate}
-                    required
-                ></textarea>
-            </div>
-        </>
+    
+    const renderWelcomeView = () => (
+        <div className="workspace-welcome">
+            <div className="icon">✍️</div>
+            <h3>Content Hub</h3>
+            <p>Ready to create? Start a brand new article or select an existing post from the sidebar to begin optimizing.</p>
+        </div>
     );
-
-    const renderNewMode = () => (
+    
+    const renderNewPostView = () => (
          <>
             <div className="post-ideas-generator">
                 <h4>Need inspiration?</h4>
@@ -452,24 +410,137 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 <label htmlFor="rawContent">Raw Text Content for New Post</label>
                 <textarea id="rawContent" value={rawContent} onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'rawContent', value: e.target.value}})} placeholder="Paste your raw, unformatted text here, or generate ideas above and select one to start." required></textarea>
             </div>
+             <div className="button-group">
+                <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Config</button>
+                <button onClick={onGenerateContent} className="btn" disabled={loading.content || !rawContent}>
+                    {loading.content ? 'Generating...' : 'Optimize New Content'}
+                </button>
+            </div>
+        </>
+    );
+
+    const renderEditPostView = () => (
+        <>
+            <div className="form-group">
+                <label htmlFor="rawContent">Content from Selected Post</label>
+                <textarea 
+                    id="rawContent" 
+                    value={rawContent} 
+                    onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'rawContent', value: e.target.value}})} 
+                    placeholder={postToUpdate ? "Content is loaded from the selected post." : "Select a post from the list to load its content for optimization."}
+                    disabled={!postToUpdate}
+                    required
+                ></textarea>
+            </div>
+             <div className="button-group">
+                <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Config</button>
+                <button onClick={onGenerateContent} className="btn" disabled={loading.content || !rawContent}>
+                    {loading.content ? 'Generating...' : 'Optimize Existing Content'}
+                </button>
+            </div>
         </>
     );
 
     return (
-        <div className="step-container" id="step-2-content">
-            <div className="content-mode-toggle">
-                <button onClick={() => setMode('new')} className={mode === 'new' ? 'active' : ''}>Create New Post</button>
-                <button onClick={() => setMode('update')} className={mode === 'update' ? 'active' : ''}>Update Existing Post</button>
-            </div>
+        <div className="step-container content-hub-layout" id="step-2-content">
+            <aside className="content-hub-sidebar">
+                <div className="sidebar-header">
+                     <button onClick={handleCreateNewClick} className="btn" style={{marginBottom: '1.5rem'}}>
+                        + Create New Post
+                    </button>
+                    
+                    {wpConnectionStatus !== 'success' ? (
+                         <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
+                            <p>Verify WordPress connection in Step 1 to manage existing posts.</p>
+                        </div>
+                    ) : wpPosts.length === 0 ? (
+                        <button onClick={onFetchWpPosts} className="btn" disabled={loading.posts}>
+                            {loading.posts ? 'Loading Posts...' : 'Load Published Posts'}
+                        </button>
+                    ) : (
+                        <div className="sidebar-controls">
+                            <div className="posts-filter-controls">
+                                <input
+                                    type="text"
+                                    placeholder="Search posts..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className="posts-search-input"
+                                />
+                                <div className="checkbox-group">
+                                    <input type="checkbox" id="hideUpdated" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
+                                    <label htmlFor="hideUpdated">Hide done posts</label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="posts-list-container">
+                    <table className="posts-table">
+                        <thead>
+                            <tr>
+                                <th onClick={() => requestSort('status')} className={sortConfig.key === 'status' ? 'active' : ''}>
+                                    <span title="Status">St</span>
+                                    <span className="sort-indicator">{getSortIndicator('status')}</span>
+                                </th>
+                                <th onClick={() => requestSort('title')} className={sortConfig.key === 'title' ? 'active' : ''}>
+                                    Post Title
+                                    <span className="sort-indicator">{getSortIndicator('title')}</span>
+                                </th>
+                                <th onClick={() => requestSort('keyword')} className={sortConfig.key === 'keyword' ? 'active' : ''}>
+                                    Keyword
+                                    <span className="sort-indicator">{getSortIndicator('keyword')}</span>
+                                </th>
+                                <th onClick={() => requestSort('modified')} className={sortConfig.key === 'modified' ? 'active' : ''}>
+                                    Last Mod.
+                                    <span className="sort-indicator">{getSortIndicator('modified')}</span>
+                                </th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sortedAndFilteredPosts.map(post => {
+                                const { icon, label } = getPostStatus(post);
+                                const classNames = [
+                                    post.id === postToUpdate ? 'selected' : '',
+                                    !post.canEdit ? 'cannot-edit' : '',
+                                    post.updatedInSession ? 'updated-in-session' : '',
+                                ].filter(Boolean).join(' ');
 
-            {mode === 'new' ? renderNewMode() : renderUpdateMode()}
-
-            <div className="button-group">
-                <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Config</button>
-                <button onClick={onGenerateContent} className="btn" disabled={loading.content || !rawContent}>
-                    {loading.content ? 'Generating...' : (postToUpdate ? 'Optimize Existing Content' : 'Optimize New Content')}
-                </button>
-            </div>
+                                return (
+                                    <tr 
+                                        key={post.id} 
+                                        className={classNames}
+                                        onClick={() => handlePostRowClick(post)}
+                                        style={{cursor: !post.canEdit ? 'not-allowed' : 'pointer'}}
+                                    >
+                                        <td className="status-cell" title={label}>{icon}</td>
+                                        <td className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
+                                        <td className="keyword-cell" title={post.keyword}>
+                                            {post.status === 'loading' ? <div className="keyword-loading-spinner"></div> : post.keyword}
+                                        </td>
+                                        <td>{new Date(post.modified).toLocaleDateString()}</td>
+                                        <td>
+                                            <button 
+                                                className="btn btn-small"
+                                                disabled={post.status === 'loading' || !post.canEdit}
+                                                onClick={(e) => { e.stopPropagation(); handlePostRowClick(post); }}
+                                            >
+                                                {post.id === postToUpdate ? 'Editing' : (post.status === 'loading' ? '...' : 'Select')}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </aside>
+            <main className="content-hub-workspace">
+                {activeView === 'welcome' && renderWelcomeView()}
+                {activeView === 'new' && renderNewPostView()}
+                {activeView === 'edit' && renderEditPostView()}
+            </main>
         </div>
     );
 };
@@ -725,7 +796,7 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
 
 const initialState = {
     step: 1,
-    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false },
+    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false, wpConnection: false },
     logs: [],
     result: null,
     wpUrl: '',
@@ -749,9 +820,12 @@ const initialState = {
     openRouterModel: 'google/gemini-2.5-flash',
     duplicateInfo: { similarUrl: null, postId: null },
     publishMode: 'publish', // 'publish' or 'update'
-    wpPosts: [], // { id, title, link, date, modified, keyword, content, status, updatedInSession }
+    wpPosts: [], // { id, title, link, date, modified, keyword, content, status, updatedInSession, canEdit }
     postToUpdate: null, // number | null
     postIdeas: [],
+    wpConnectionStatus: 'idle', // idle, verifying, success, error
+    wpConnectionError: '',
+    wpUserRoles: [],
 };
 
 
@@ -774,10 +848,17 @@ function appReducer(state, action) {
                 ...state,
                 wpUrl: '', wpUser: '', wpPassword: '', sitemapUrl: 'https://affiliatemarketingforsuccess.com/sitemap.xml', urlLimit: 500,
                 aiProvider: 'gemini', apiKeys: { gemini: '', openai: '', claude: '', openrouter: '' },
-                keyStatus: { gemini: 'idle', openai: 'idle', claude: 'idle', openrouter: 'idle' }
+                keyStatus: { gemini: 'idle', openai: 'idle', claude: 'idle', openrouter: 'idle' },
+                wpConnectionStatus: 'idle', wpConnectionError: '', wpUserRoles: [],
             };
         case 'UPDATE_FIELD':
-            return { ...state, [action.payload.field]: action.payload.value };
+            const newState = { ...state, [action.payload.field]: action.payload.value };
+            if (['wpUrl', 'wpUser', 'wpPassword'].includes(action.payload.field)) {
+                newState.wpConnectionStatus = 'idle';
+                newState.wpConnectionError = '';
+                newState.wpUserRoles = [];
+            }
+            return newState;
         case 'SET_FETCHED_URLS':
             return { ...state, fetchedUrls: action.payload, step: 2 };
         case 'SET_GENERATED_CONTENT':
@@ -803,7 +884,15 @@ function appReducer(state, action) {
         case 'SET_PUBLISH_MODE':
             return { ...state, publishMode: action.payload };
         case 'SET_WP_POSTS':
-            return { ...state, wpPosts: action.payload };
+            const roles = state.wpUserRoles || [];
+            const isAdminOrEditor = roles.includes('administrator') || roles.includes('editor');
+            const postsWithEditability = action.payload.map(p => ({
+                ...p,
+                // If the user is an admin/editor, they can edit everything.
+                // Otherwise, fall back to checking the API's permission link.
+                canEdit: isAdminOrEditor || !!(p._links && p._links['wp:action-edit'])
+            }));
+            return { ...state, wpPosts: postsWithEditability };
         case 'UPDATE_WP_POST_STATUS':
             return {
                 ...state,
@@ -834,11 +923,18 @@ function appReducer(state, action) {
             return { ...state, postToUpdate: null, rawContent: '' };
         case 'SET_POST_IDEAS':
             return { ...state, postIdeas: action.payload };
+        case 'SET_WP_CONNECTION_STATUS':
+            return { 
+                ...state, 
+                wpConnectionStatus: action.payload.status,
+                wpConnectionError: action.payload.error || '',
+                wpUserRoles: action.payload.roles || state.wpUserRoles
+            };
         case 'RESET_FOR_NEW_POST':
             return {
                 ...state,
                 step: 2,
-                loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: state.loading.posts, ideas: false },
+                loading: { ...initialState.loading, posts: state.loading.posts },
                 logs: [],
                 result: null,
                 rawContent: '',
@@ -891,6 +987,35 @@ const App = () => {
             dispatch({ type: 'SET_KEY_STATUS', payload: { provider, status: 'invalid' } });
         }
     }, []);
+
+    const handleVerifyWpConnection = useCallback(async () => {
+        dispatch({ type: 'SET_LOADING_STATE', payload: { wpConnection: true } });
+        dispatch({ type: 'SET_WP_CONNECTION_STATUS', payload: { status: 'verifying' } });
+        addLog(`🔐 Verifying connection to ${wpUrl}...`);
+
+        try {
+            const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/users/me?context=edit`;
+            const credentials = btoa(`${wpUser}:${wpPassword}`);
+            const headers = { 'Authorization': `Basic ${credentials}` };
+
+            const response = await fetch(apiUrl, { headers });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || `Request failed with status ${response.status}`);
+            }
+            
+            addLog(`✅ Connection successful. Logged in as ${data.name}.`);
+            dispatch({ type: 'SET_WP_CONNECTION_STATUS', payload: { status: 'success', roles: data.roles } });
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            addLog(`❌ Connection failed: ${errorMessage}`);
+            dispatch({ type: 'SET_WP_CONNECTION_STATUS', payload: { status: 'error', error: errorMessage } });
+        } finally {
+            dispatch({ type: 'SET_LOADING_STATE', payload: { wpConnection: false } });
+        }
+    }, [wpUrl, wpUser, wpPassword, addLog]);
 
 
     const handleFetchSitemap = useCallback(async (fetchUrls = true) => {
@@ -966,7 +1091,7 @@ const App = () => {
         addLog(`📡 Fetching posts from ${wpUrl}...`);
 
         try {
-            const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts?status=publish&per_page=100&_fields=id,title,link,date,modified`;
+            const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts?status=publish&per_page=100&_fields=id,title,link,date,modified,_links`;
             const credentials = btoa(`${wpUser}:${wpPassword}`);
             const headers = { 'Authorization': `Basic ${credentials}` };
 
@@ -1729,7 +1854,7 @@ ${PROMOTIONAL_URLS.join('\n')}
     const renderStep = () => {
         switch (state.step) {
             case 1:
-                return <ConfigStep state={state} dispatch={dispatch} onFetchSitemap={handleFetchSitemap} onValidateKey={handleKeyValidation} />;
+                return <ConfigStep state={state} dispatch={dispatch} onFetchSitemap={handleFetchSitemap} onValidateKey={handleKeyValidation} onVerifyWpConnection={handleVerifyWpConnection} />;
             case 2:
                 return <ContentStep state={state} dispatch={dispatch} onGenerateContent={handleGenerateContent} onFetchWpPosts={handleFetchWpPosts} onAnalyzeAndSelect={handleAnalyzeAndSelect} onGeneratePostIdeas={handleGeneratePostIdeas} />;
             case 3:
