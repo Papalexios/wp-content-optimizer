@@ -52,18 +52,21 @@ const PROMOTIONAL_URLS = [
 const ProgressBar = ({ currentStep }: { currentStep: number }) => {
     const steps = ['Config', 'Content', 'Review & Publish'];
     return (
-        <ol className="progress-bar">
-            {steps.map((name, index) => {
-                const stepIndex = index + 1;
-                const status = stepIndex < currentStep ? 'completed' : stepIndex === currentStep ? 'active' : '';
-                return (
-                    <li key={name} className={`progress-step ${status}`}>
-                        <div className="step-circle">{stepIndex < currentStep ? '✔' : stepIndex}</div>
-                        {name}
-                    </li>
-                );
-            })}
-        </ol>
+        <div className="progress-bar-container">
+            <h2 className="mobile-step-title">Step {currentStep}: {steps[currentStep - 1]}</h2>
+            <ol className="progress-bar">
+                {steps.map((name, index) => {
+                    const stepIndex = index + 1;
+                    const status = stepIndex < currentStep ? 'completed' : stepIndex === currentStep ? 'active' : '';
+                    return (
+                        <li key={name} className={`progress-step ${status}`}>
+                            <div className="step-circle">{stepIndex < currentStep ? '✔' : stepIndex}</div>
+                            <div className="step-name">{name}</div>
+                        </li>
+                    );
+                })}
+            </ol>
+        </div>
     );
 };
 
@@ -286,6 +289,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'modified', direction: 'ascending' });
     const [hideUpdated, setHideUpdated] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
         if (postToUpdate) {
@@ -296,11 +300,13 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     const handleCreateNewClick = () => {
         dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
         setActiveView('new');
+        setIsSidebarOpen(false);
     };
 
     const handlePostRowClick = (post) => {
         if (!post.canEdit || post.status === 'loading' || post.id === postToUpdate) return;
         onAnalyzeAndSelect(post);
+        setIsSidebarOpen(false);
     };
     
     const getPostStatus = (post) => {
@@ -371,7 +377,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         <div className="workspace-welcome">
             <div className="icon">✍️</div>
             <h3>Content Hub</h3>
-            <p>Ready to create? Start a brand new article or select an existing post from the sidebar to begin optimizing.</p>
+            <p>Ready to create? Start a brand new article or select an existing post to begin optimizing.</p>
         </div>
     );
     
@@ -443,8 +449,10 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
 
     return (
         <div className="step-container content-hub-layout" id="step-2-content">
-            <aside className="content-hub-sidebar">
+            <div className={`sidebar-backdrop ${isSidebarOpen ? 'is-open' : ''}`} onClick={() => setIsSidebarOpen(false)}></div>
+            <aside className={`content-hub-sidebar ${isSidebarOpen ? 'is-open' : ''}`}>
                 <div className="sidebar-header">
+                     <button className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)} aria-label="Close post list">&times;</button>
                      <button onClick={handleCreateNewClick} className="btn" style={{marginBottom: '1.5rem'}}>
                         + Create New Post
                     </button>
@@ -537,6 +545,12 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 </div>
             </aside>
             <main className="content-hub-workspace">
+                 <button className="mobile-sidebar-trigger" onClick={() => setIsSidebarOpen(true)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                    Manage Posts
+                </button>
                 {activeView === 'welcome' && renderWelcomeView()}
                 {activeView === 'new' && renderNewPostView()}
                 {activeView === 'edit' && renderEditPostView()}
