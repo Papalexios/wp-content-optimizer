@@ -330,6 +330,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     const [activeSidebarTab, setActiveSidebarTab] = useState('update'); // 'update', 'create'
     const [createMode, setCreateMode] = useState('single'); // 'single', 'batch'
     const [batchTopics, setBatchTopics] = useState('');
+    const [isPostSelectorOpen, setIsPostSelectorOpen] = useState(false);
 
     // Post List State
     const [searchTerm, setSearchTerm] = useState('');
@@ -353,6 +354,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     const handlePostRowClick = (post) => {
         if (!post.canEdit || post.status === 'loading' || post.id === postToUpdate) return;
         onAnalyzeAndSelect(post);
+        setIsPostSelectorOpen(false); // Close modal on selection
     };
 
     const handleBatchItemReview = (job) => {
@@ -427,7 +429,18 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         <div className="workspace-welcome">
             <div className="icon">✍️</div>
             <h3>Content Hub</h3>
-            <p>Ready to create? Start a brand new article or select an existing post from the sidebar to begin optimizing.</p>
+            <p className="is-desktop-only">Ready to create? Start a brand new article or select an existing post from the sidebar to begin optimizing.</p>
+            <p className="is-mobile-only">Start a brand new article or select an existing post to begin optimizing.</p>
+
+            <div className="welcome-actions is-mobile-flex">
+                 <button onClick={handleCreateNewClick} className="btn">+ Create New Post</button>
+                 <button onClick={() => {
+                     if (wpPosts.length === 0 && wpConnectionStatus === 'success') onFetchWpPosts();
+                     setIsPostSelectorOpen(true);
+                 }} className="btn btn-secondary" disabled={loading.posts || wpConnectionStatus !== 'success'}>
+                     {loading.posts ? 'Loading Posts...' : 'Update Existing Post'}
+                 </button>
+             </div>
         </div>
     );
     
@@ -482,6 +495,12 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
 
     const renderEditPostView = () => (
         <>
+            <div className="edit-post-header">
+                <h4>Editing: <span>{wpPosts.find(p => p.id === postToUpdate)?.title.rendered || '...'}</span></h4>
+                <button className="btn btn-small btn-secondary" onClick={() => setIsPostSelectorOpen(true)}>
+                    Change Post
+                </button>
+            </div>
             <div className="form-group">
                 <label htmlFor="rawContent">Content from Selected Post</label>
                 <textarea 
@@ -545,18 +564,18 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                     <tbody>
                         {sortedAndFilteredPosts.map(post => {
                             const { icon, label } = getPostStatus(post);
-                            const classNames = [ post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
+                            const classNames = [ 'post-row-clickable', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
                             return (
-                                <tr key={post.id} className={classNames} >
+                                <tr key={post.id} className={classNames} onClick={() => handlePostRowClick(post)}>
                                     <td className="status-cell" title={label}>{icon}</td>
                                     <td className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
                                     <td className="keyword-cell" title={post.keyword}>{post.status === 'loading' ? <div className="keyword-loading-spinner"></div> : post.keyword}</td>
                                     <td>{new Date(post.modified).toLocaleDateString()}</td>
                                     <td className="actions-cell">
-                                        <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn-icon" title="View Live Post">
+                                        <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn-icon" title="View Live Post" onClick={e => e.stopPropagation()}>
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                         </a>
-                                        <button onClick={() => handlePostRowClick(post)} className="btn-icon" title="Analyze & Edit Post" disabled={!post.canEdit || post.status === 'loading'}>
+                                        <button className="btn-icon" title="Analyze & Edit Post" disabled={!post.canEdit || post.status === 'loading'} onClick={e => e.stopPropagation()}>
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                                         </button>
                                     </td>
@@ -570,7 +589,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                         const { icon, label } = getPostStatus(post);
                         const classNames = [ 'post-card', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
                         return (
-                             <div key={post.id} className={classNames}>
+                             <div key={post.id} className={classNames} onClick={() => post.canEdit && post.status !== 'loading' && handlePostRowClick(post)}>
                                 <div className="post-card-header">
                                     <span className="post-card-status" title={label}>{icon}</span>
                                     <h5 className="post-card-title">{post.title.rendered}</h5>
@@ -580,8 +599,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                                     <p><strong>Modified:</strong> {new Date(post.modified).toLocaleDateString()}</p>
                                 </div>
                                 <div className="post-card-actions">
-                                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn btn-small btn-secondary">View</a>
-                                    <button onClick={() => handlePostRowClick(post)} className="btn btn-small" disabled={!post.canEdit || post.status === 'loading'}>
+                                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn btn-small btn-secondary" onClick={e => e.stopPropagation()}>View</a>
+                                    <button className="btn btn-small" disabled={!post.canEdit || post.status === 'loading'}>
                                         {post.status === 'loading' ? '...' : 'Edit'}
                                     </button>
                                 </div>
@@ -635,45 +654,100 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
             )}
         </div>
     );
+
+    const renderPostSelectorModal = () => {
+        if (!isPostSelectorOpen) return null;
+    
+        return (
+            <div className="post-selector-modal">
+                <div className="post-selector-content">
+                    <div className="post-selector-header">
+                        <h3>Select a Post to Edit</h3>
+                        <button onClick={() => setIsPostSelectorOpen(false)} className="btn-icon btn-close" aria-label="Close">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div className="post-selector-controls">
+                        <div className="posts-filter-controls">
+                            <input type="text" placeholder="Search posts..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="posts-search-input" />
+                            <div className="checkbox-group" style={{marginTop: '0.75rem'}}>
+                                <input type="checkbox" id="hideUpdatedModal" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
+                                <label htmlFor="hideUpdatedModal">Hide done posts</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="post-selector-body">
+                        <div className="posts-card-view" style={{display: 'grid'}}>
+                            {sortedAndFilteredPosts.map(post => {
+                                const { icon, label } = getPostStatus(post);
+                                const classNames = [ 'post-card', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
+                                return (
+                                     <div key={post.id} className={classNames} onClick={() => post.canEdit && post.status !== 'loading' && handlePostRowClick(post)}>
+                                        <div className="post-card-header">
+                                            <span className="post-card-status" title={label}>{icon}</span>
+                                            <h5 className="post-card-title">{post.title.rendered}</h5>
+                                        </div>
+                                        <div className="post-card-body">
+                                            <p><strong>Keyword:</strong> {post.status === 'loading' ? 'Analyzing...' : (post.keyword || 'N/A')}</p>
+                                            <p><strong>Modified:</strong> {new Date(post.modified).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="post-card-actions">
+                                            <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn btn-small btn-secondary" onClick={e => e.stopPropagation()}>View</a>
+                                            <button className="btn btn-small" disabled={!post.canEdit || post.status === 'loading'}>
+                                                {post.id === postToUpdate ? 'Selected' : 'Edit'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
     
     return (
-        <div className="step-container content-hub-layout" id="step-2-content">
-            <aside className="content-hub-sidebar">
-                <div className="sidebar-tabs">
-                    <button className={`tab-btn ${activeSidebarTab === 'update' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('update')}>Update Existing</button>
-                    <button className={`tab-btn ${activeSidebarTab === 'create' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('create')}>Create New</button>
-                </div>
+        <>
+            <div className="step-container content-hub-layout" id="step-2-content">
+                <aside className="content-hub-sidebar is-desktop-only">
+                    <div className="sidebar-tabs">
+                        <button className={`tab-btn ${activeSidebarTab === 'update' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('update')}>Update Existing</button>
+                        <button className={`tab-btn ${activeSidebarTab === 'create' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('create')}>Create New</button>
+                    </div>
 
-                {activeSidebarTab === 'update' && renderPostList()}
-                
-                {activeSidebarTab === 'create' && (
-                    <div className="create-new-content">
-                        <div className="create-mode-tabs">
-                            <button className={`tab-btn ${createMode === 'single' ? 'active' : ''}`} onClick={() => { setCreateMode('single'); setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Single Post</button>
-                            <button className={`tab-btn ${createMode === 'batch' ? 'active' : ''}`} onClick={() => { setCreateMode('batch'); setActiveView('batch'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Batch Create</button>
-                        </div>
-                        {createMode === 'batch' ? renderBatchCreateView() : (
-                            <div style={{paddingTop: '1rem'}}>
-                                <button onClick={() => {setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' });}} className="btn">+ Create New Post</button>
+                    {activeSidebarTab === 'update' && renderPostList()}
+                    
+                    {activeSidebarTab === 'create' && (
+                        <div className="create-new-content">
+                            <div className="create-mode-tabs">
+                                <button className={`tab-btn ${createMode === 'single' ? 'active' : ''}`} onClick={() => { setCreateMode('single'); setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Single Post</button>
+                                <button className={`tab-btn ${createMode === 'batch' ? 'active' : ''}`} onClick={() => { setCreateMode('batch'); setActiveView('batch'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Batch Create</button>
                             </div>
-                        )}
-                    </div>
-                )}
+                            {createMode === 'batch' ? renderBatchCreateView() : (
+                                <div style={{paddingTop: '1rem'}}>
+                                    <button onClick={() => {setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' });}} className="btn">+ Create New Post</button>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
-            </aside>
-            <main className="content-hub-workspace">
-                {activeView === 'welcome' && renderWelcomeView()}
-                {activeView === 'new' && renderNewPostView()}
-                {activeView === 'edit' && renderEditPostView()}
-                {activeView === 'batch' && (
-                    <div className="workspace-welcome">
-                        <div className="icon">🚀</div>
-                        <h3>Batch Generation</h3>
-                        <p>Configure your batch job in the sidebar. Progress and completed posts will appear there once you begin.</p>
-                    </div>
-                )}
-            </main>
-        </div>
+                </aside>
+                <main className="content-hub-workspace">
+                    {activeView === 'welcome' && renderWelcomeView()}
+                    {activeView === 'new' && renderNewPostView()}
+                    {activeView === 'edit' && renderEditPostView()}
+                    {activeView === 'batch' && (
+                        <div className="workspace-welcome">
+                            <div className="icon">🚀</div>
+                            <h3>Batch Generation</h3>
+                            <p>Configure your batch job in the sidebar. Progress and completed posts will appear there once you begin.</p>
+                        </div>
+                    )}
+                </main>
+            </div>
+            {renderPostSelectorModal()}
+        </>
     );
 };
 
