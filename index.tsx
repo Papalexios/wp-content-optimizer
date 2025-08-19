@@ -322,9 +322,16 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
     );
 };
 
-const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAnalyzeAndSelect, onGeneratePostIdeas }) => {
-    const { rawContent, loading, wpPosts, postToUpdate, wpConnectionStatus, postIdeas, fetchedUrls } = state;
-    const [activeView, setActiveView] = useState('welcome'); // 'welcome', 'new', 'edit'
+const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAnalyzeAndSelect, onGeneratePostIdeas, onGenerateBatch, onLoadBatchResultForReview }) => {
+    const { rawContent, loading, wpPosts, postToUpdate, wpConnectionStatus, postIdeas, fetchedUrls, batchJobs } = state;
+    
+    // UI State
+    const [activeView, setActiveView] = useState('welcome'); // 'welcome', 'new', 'edit', 'batch'
+    const [activeSidebarTab, setActiveSidebarTab] = useState('update'); // 'update', 'create'
+    const [createMode, setCreateMode] = useState('single'); // 'single', 'batch'
+    const [batchTopics, setBatchTopics] = useState('');
+
+    // Post List State
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'modified', direction: 'ascending' });
     const [hideUpdated, setHideUpdated] = useState(false);
@@ -332,17 +339,24 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     useEffect(() => {
         if (postToUpdate) {
             setActiveView('edit');
+            setActiveSidebarTab('update'); // Switch to update tab if a post is selected
         }
     }, [postToUpdate]);
     
     const handleCreateNewClick = () => {
         dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+        setActiveSidebarTab('create');
+        setCreateMode('single');
         setActiveView('new');
     };
 
     const handlePostRowClick = (post) => {
         if (!post.canEdit || post.status === 'loading' || post.id === postToUpdate) return;
         onAnalyzeAndSelect(post);
+    };
+
+    const handleBatchItemReview = (job) => {
+        onLoadBatchResultForReview(job.result);
     };
     
     const getPostStatus = (post) => {
@@ -488,105 +502,176 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         </>
     );
 
+    const renderPostList = () => (
+        <>
+            <div className="sidebar-header">
+                {wpConnectionStatus !== 'success' ? (
+                    <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
+                        <p>Verify WordPress connection in Step 1 to manage existing posts.</p>
+                    </div>
+                ) : wpPosts.length === 0 ? (
+                    <button onClick={onFetchWpPosts} className="btn" disabled={loading.posts}>
+                        {loading.posts ? 'Loading Posts...' : 'Load Published Posts'}
+                    </button>
+                ) : (
+                    <div className="sidebar-controls">
+                        <div className="posts-filter-controls">
+                            <input
+                                type="text"
+                                placeholder="Search posts..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="posts-search-input"
+                            />
+                            <div className="checkbox-group">
+                                <input type="checkbox" id="hideUpdated" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
+                                <label htmlFor="hideUpdated">Hide done posts</label>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+            <div className="posts-list-container">
+                <table className="posts-table">
+                    <thead>
+                        <tr>
+                            <th onClick={() => requestSort('status')} className={sortConfig.key === 'status' ? 'active' : ''}><span title="Status">St</span><span className="sort-indicator">{getSortIndicator('status')}</span></th>
+                            <th onClick={() => requestSort('title')} className={sortConfig.key === 'title' ? 'active' : ''}>Post Title<span className="sort-indicator">{getSortIndicator('title')}</span></th>
+                            <th onClick={() => requestSort('keyword')} className={sortConfig.key === 'keyword' ? 'active' : ''}>Keyword<span className="sort-indicator">{getSortIndicator('keyword')}</span></th>
+                            <th onClick={() => requestSort('modified')} className={sortConfig.key === 'modified' ? 'active' : ''}>Last Mod.<span className="sort-indicator">{getSortIndicator('modified')}</span></th>
+                            <th className="actions-cell">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sortedAndFilteredPosts.map(post => {
+                            const { icon, label } = getPostStatus(post);
+                            const classNames = [ post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
+                            return (
+                                <tr key={post.id} className={classNames} >
+                                    <td className="status-cell" title={label}>{icon}</td>
+                                    <td className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
+                                    <td className="keyword-cell" title={post.keyword}>{post.status === 'loading' ? <div className="keyword-loading-spinner"></div> : post.keyword}</td>
+                                    <td>{new Date(post.modified).toLocaleDateString()}</td>
+                                    <td className="actions-cell">
+                                        <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn-icon" title="View Live Post">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                        </a>
+                                        <button onClick={() => handlePostRowClick(post)} className="btn-icon" title="Analyze & Edit Post" disabled={!post.canEdit || post.status === 'loading'}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+                 <div className="posts-card-view">
+                    {sortedAndFilteredPosts.map(post => {
+                        const { icon, label } = getPostStatus(post);
+                        const classNames = [ 'post-card', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
+                        return (
+                             <div key={post.id} className={classNames}>
+                                <div className="post-card-header">
+                                    <span className="post-card-status" title={label}>{icon}</span>
+                                    <h5 className="post-card-title">{post.title.rendered}</h5>
+                                </div>
+                                <div className="post-card-body">
+                                    <p><strong>Keyword:</strong> {post.status === 'loading' ? 'Analyzing...' : (post.keyword || 'N/A')}</p>
+                                    <p><strong>Modified:</strong> {new Date(post.modified).toLocaleDateString()}</p>
+                                </div>
+                                <div className="post-card-actions">
+                                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn btn-small btn-secondary">View</a>
+                                    <button onClick={() => handlePostRowClick(post)} className="btn btn-small" disabled={!post.canEdit || post.status === 'loading'}>
+                                        {post.status === 'loading' ? '...' : 'Edit'}
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </>
+    );
+    
+    const renderBatchCreateView = () => (
+        <div className="batch-create-container">
+            <h4>Batch Post Generation</h4>
+            <p className="help-text">Enter one blog post title or topic per line. The AI will generate a full article for each.</p>
+            <div className="form-group">
+                <textarea 
+                    id="batchTopics" 
+                    value={batchTopics}
+                    onChange={e => setBatchTopics(e.target.value)}
+                    placeholder="Example: The Ultimate Guide to SEO in 2025&#10;How to Start Affiliate Marketing for Beginners&#10;Top 10 AI tools for Content Creators"
+                    disabled={loading.batch}
+                    rows={8}
+                ></textarea>
+            </div>
+            <button onClick={() => onGenerateBatch(batchTopics)} className="btn" disabled={loading.batch || !batchTopics.trim()}>
+                {loading.batch ? 'Generating Batch...' : `Generate ${batchTopics.split('\n').filter(t => t.trim()).length} Posts`}
+            </button>
+            
+            {batchJobs.length > 0 && (
+                <div className="batch-jobs-progress">
+                    <h5>Generation Progress</h5>
+                    {batchJobs.map(job => (
+                        <div key={job.id} className={`batch-job-item status-${job.status}`}>
+                            <div className="job-status-icon">
+                                {job.status === 'queued' && '🕒'}
+                                {job.status === 'processing' && <div className="keyword-loading-spinner"></div>}
+                                {job.status === 'done' && '✅'}
+                                {job.status === 'error' && '❌'}
+                            </div>
+                            <div className="job-details">
+                                <p className="job-title">{job.title}</p>
+                                {job.status === 'error' && <p className="job-error">{String(job.result)}</p>}
+                            </div>
+                            {job.status === 'done' && (
+                                <button className="btn btn-small" onClick={() => handleBatchItemReview(job)}>Review & Publish</button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+    
     return (
         <div className="step-container content-hub-layout" id="step-2-content">
             <aside className="content-hub-sidebar">
-                <div className="sidebar-header">
-                     <button onClick={handleCreateNewClick} className="btn" style={{marginBottom: '1.5rem'}}>
-                        + Create New Post
-                    </button>
-                    
-                    {wpConnectionStatus !== 'success' ? (
-                         <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
-                            <p>Verify WordPress connection in Step 1 to manage existing posts.</p>
-                        </div>
-                    ) : wpPosts.length === 0 ? (
-                        <button onClick={onFetchWpPosts} className="btn" disabled={loading.posts}>
-                            {loading.posts ? 'Loading Posts...' : 'Load Published Posts'}
-                        </button>
-                    ) : (
-                        <div className="sidebar-controls">
-                            <div className="posts-filter-controls">
-                                <input
-                                    type="text"
-                                    placeholder="Search posts..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="posts-search-input"
-                                />
-                                <div className="checkbox-group">
-                                    <input type="checkbox" id="hideUpdated" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
-                                    <label htmlFor="hideUpdated">Hide done posts</label>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                <div className="sidebar-tabs">
+                    <button className={`tab-btn ${activeSidebarTab === 'update' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('update')}>Update Existing</button>
+                    <button className={`tab-btn ${activeSidebarTab === 'create' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('create')}>Create New</button>
                 </div>
-                <div className="posts-list-container">
-                    <table className="posts-table">
-                        <thead>
-                            <tr>
-                                <th onClick={() => requestSort('status')} className={sortConfig.key === 'status' ? 'active' : ''}>
-                                    <span title="Status">St</span>
-                                    <span className="sort-indicator">{getSortIndicator('status')}</span>
-                                </th>
-                                <th onClick={() => requestSort('title')} className={sortConfig.key === 'title' ? 'active' : ''}>
-                                    Post Title
-                                    <span className="sort-indicator">{getSortIndicator('title')}</span>
-                                </th>
-                                <th onClick={() => requestSort('keyword')} className={sortConfig.key === 'keyword' ? 'active' : ''}>
-                                    Keyword
-                                    <span className="sort-indicator">{getSortIndicator('keyword')}</span>
-                                </th>
-                                <th onClick={() => requestSort('modified')} className={sortConfig.key === 'modified' ? 'active' : ''}>
-                                    Last Mod.
-                                    <span className="sort-indicator">{getSortIndicator('modified')}</span>
-                                </th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sortedAndFilteredPosts.map(post => {
-                                const { icon, label } = getPostStatus(post);
-                                const classNames = [
-                                    post.id === postToUpdate ? 'selected' : '',
-                                    !post.canEdit ? 'cannot-edit' : '',
-                                    post.updatedInSession ? 'updated-in-session' : '',
-                                ].filter(Boolean).join(' ');
 
-                                return (
-                                    <tr 
-                                        key={post.id} 
-                                        className={classNames}
-                                        onClick={() => handlePostRowClick(post)}
-                                        style={{cursor: !post.canEdit ? 'not-allowed' : 'pointer'}}
-                                    >
-                                        <td className="status-cell" title={label}>{icon}</td>
-                                        <td className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
-                                        <td className="keyword-cell" title={post.keyword}>
-                                            {post.status === 'loading' ? <div className="keyword-loading-spinner"></div> : post.keyword}
-                                        </td>
-                                        <td>{new Date(post.modified).toLocaleDateString()}</td>
-                                        <td>
-                                            <button 
-                                                className="btn btn-small"
-                                                disabled={post.status === 'loading' || !post.canEdit}
-                                                onClick={(e) => { e.stopPropagation(); handlePostRowClick(post); }}
-                                            >
-                                                {post.id === postToUpdate ? 'Editing' : (post.status === 'loading' ? '...' : 'Select')}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                {activeSidebarTab === 'update' && renderPostList()}
+                
+                {activeSidebarTab === 'create' && (
+                    <div className="create-new-content">
+                        <div className="create-mode-tabs">
+                            <button className={`tab-btn ${createMode === 'single' ? 'active' : ''}`} onClick={() => { setCreateMode('single'); setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Single Post</button>
+                            <button className={`tab-btn ${createMode === 'batch' ? 'active' : ''}`} onClick={() => { setCreateMode('batch'); setActiveView('batch'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Batch Create</button>
+                        </div>
+                        {createMode === 'batch' ? renderBatchCreateView() : (
+                            <div style={{paddingTop: '1rem'}}>
+                                <button onClick={() => {setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' });}} className="btn">+ Create New Post</button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
             </aside>
             <main className="content-hub-workspace">
                 {activeView === 'welcome' && renderWelcomeView()}
                 {activeView === 'new' && renderNewPostView()}
                 {activeView === 'edit' && renderEditPostView()}
+                {activeView === 'batch' && (
+                    <div className="workspace-welcome">
+                        <div className="icon">🚀</div>
+                        <h3>Batch Generation</h3>
+                        <p>Configure your batch job in the sidebar. Progress and completed posts will appear there once you begin.</p>
+                    </div>
+                )}
             </main>
         </div>
     );
@@ -843,7 +928,7 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
 
 const initialState = {
     step: 1,
-    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false, wpConnection: false },
+    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false, wpConnection: false, batch: false },
     logs: [],
     result: null,
     wpUrl: '',
@@ -870,6 +955,7 @@ const initialState = {
     wpPosts: [], // { id, title, link, date, modified, keyword, content, status, updatedInSession, canEdit }
     postToUpdate: null, // number | null
     postIdeas: [],
+    batchJobs: [], // { id, title, status, result }
     wpConnectionStatus: 'idle', // idle, verifying, success, error
     wpConnectionError: '',
     wpUserRoles: [],
@@ -976,6 +1062,28 @@ function appReducer(state, action) {
                 wpConnectionStatus: action.payload.status,
                 wpConnectionError: action.payload.error || '',
                 wpUserRoles: action.payload.roles || state.wpUserRoles
+            };
+        case 'START_BATCH_GENERATION':
+            return { ...state, loading: { ...state.loading, batch: true }, batchJobs: action.payload, logs: [], result: null };
+        case 'UPDATE_BATCH_JOB_STATUS':
+            return {
+                ...state,
+                batchJobs: state.batchJobs.map(job =>
+                    job.id === action.payload.id ? { ...job, status: action.payload.status, result: action.payload.result } : job
+                )
+            };
+        case 'FINISH_BATCH_GENERATION':
+            return { ...state, loading: { ...state.loading, batch: false } };
+        case 'LOAD_BATCH_RESULT_FOR_REVIEW':
+            return {
+                ...state,
+                step: 3,
+                result: null,
+                logs: [],
+                ...action.payload,
+                publishMode: 'publish',
+                postToUpdate: null,
+                duplicateInfo: { similarUrl: null, postId: null },
             };
         case 'RESET_FOR_NEW_POST':
             return {
@@ -1425,20 +1533,12 @@ ${fetchedUrls.join('\n')}
             dispatch({ type: 'SET_LOADING_STATE', payload: { [loadingKey]: false } });
         }
     }, [handleGenerateImage, featuredImage, infographics, dispatch]);
-
-    const handleGenerateContent = useCallback(async () => {
-        dispatch({ type: 'CLEAR_LOGS' });
-        dispatch({ type: 'SET_LOADING_STATE', payload: { content: true, featuredImage: false } });
-
-        const isUpdate = state.postToUpdate !== null;
-        const logMessage = isUpdate ? `🤖 Updating existing post. Contacting ${aiProvider}...` : `🤖 Contacting ${aiProvider} for content strategy...`;
-        addLog(logMessage);
-
-        try {
-            const apiKey = apiKeys[aiProvider];
-            if (!apiKey) throw new Error(`API Key for ${aiProvider} is not set.`);
-            
-            const updateInstructions = isUpdate ? `
+    
+    const generatePostLogic = useCallback(async (contentToProcess, isUpdate = false) => {
+        const apiKey = apiKeys[aiProvider];
+        if (!apiKey) throw new Error(`API Key for ${aiProvider} is not set.`);
+        
+        const updateInstructions = isUpdate ? `
 # TASK: UPDATE EXISTING CONTENT
 You are updating an existing article. Your mission is to substantially improve it.
 - **Analyze the original content** provided in the "Raw Text" section.
@@ -1447,18 +1547,18 @@ You are updating an existing article. Your mission is to substantially improve i
 - **The final output must be a complete, superior replacement for the old article**, following all other structural and JSON format rules.
 ` : '';
 
-            const systemInstruction = `You are "The Optimizer," a world-class SEO content strategist embodying the style of Alex Hormozi. Your directive is to transform raw text into a pillar blog post of at least 1800 words. Your core principles are extreme value, brutal honesty, and actionable frameworks. You don't write fluff; you deliver dense, high-impact content that solves problems. Every sentence must serve a purpose. Your mission is to create content so valuable that it becomes the definitive resource on the topic, ensuring it outranks all competitors. You are an expert at analyzing search results to find and exploit content gaps. Failure to follow all instructions, especially the JSON format, is not an option. You must inject critical thinking and your own unique perspective to make the content feel authentic and written by a seasoned expert.`;
+        const systemInstruction = `You are "The Optimizer," a world-class SEO content strategist embodying the style of Alex Hormozi. Your directive is to transform raw text into a pillar blog post of at least 1800 words. Your core principles are extreme value, brutal honesty, and actionable frameworks. You don't write fluff; you deliver dense, high-impact content that solves problems. Every sentence must serve a purpose. Your mission is to create content so valuable that it becomes the definitive resource on the topic, ensuring it outranks all competitors. You are an expert at analyzing search results to find and exploit content gaps. Failure to follow all instructions, especially the JSON format, is not an option. You must inject critical thinking and your own unique perspective to make the content feel authentic and written by a seasoned expert.`;
 
-            const urlsForContext = fetchedUrls;
-            let linkingInstruction;
+        const urlsForContext = fetchedUrls;
+        let linkingInstruction;
 
-            if (urlsForContext.length > 0) {
-                linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** You are required to insert between 6 and 10 relevant internal links into the main body of the article. These links **MUST ONLY** be chosen from the "Website URLs for Context & Internal Linking" list provided below. Do not use any other URLs for internal links. The anchor text must be natural, keyword-rich, and contextually appropriate. Do not place links in headings.`;
-            } else {
-                linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** You are strictly forbidden from adding any internal links to this article. The necessary list of site URLs was not provided. Do not invent links or use URLs from your general knowledge. This is a non-negotiable rule.`;
-            }
+        if (urlsForContext.length > 0) {
+            linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** You are required to insert between 6 and 10 relevant internal links into the main body of the article. These links **MUST ONLY** be chosen from the "Website URLs for Context & Internal Linking" list provided below. Do not use any other URLs for internal links. The anchor text must be natural, keyword-rich, and contextually appropriate. Do not place links in headings.`;
+        } else {
+            linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** You are strictly forbidden from adding any internal links to this article. The necessary list of site URLs was not provided. Do not invent links or use URLs from your general knowledge. This is a non-negotiable rule.`;
+        }
 
-            const basePrompt = `
+        const basePrompt = `
 ${updateInstructions}
 
 # STRATEGIC EXECUTION
@@ -1476,7 +1576,6 @@ You will perform the following sequence:
     *   **Structure:** Use clear headings (H2, H3), lists, and bold text for scannability.
     *   **Integrate Keywords:** Naturally weave the primary keyword, PAA/PASF questions, and LSI keywords throughout the text.
     *   **Internal Linking:** ${linkingInstruction}
-    *   **External Linking:** Include a "References" section with 8-12 links to high-authority EXTERNAL sites.
 4.  **JSON Formatting:** Structure your complete output according to the "JSON OUTPUT FORMAT" specified below. This is a non-negotiable final step.
 
 # REQUIRED CONTENT STRUCTURE (IN HTML):
@@ -1506,7 +1605,7 @@ You will perform the following sequence:
 # RAW DATA FOR PROCESSING
 **Raw Text:**
 ---
-${rawContent}
+${contentToProcess}
 ---
 
 **Website URLs for Context & Internal Linking:**
@@ -1514,58 +1613,59 @@ ${rawContent}
 ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTERNAL LINKS'}
 ---
 `;
-            
-            let responseText = '';
-            // --- Phase 1: Generate Text Content and Image Blueprints ---
-            if (aiProvider === 'gemini') {
-                const ai = new GoogleGenAI({ apiKey });
-                const response = await ai.models.generateContent({ 
-                    model: 'gemini-2.5-flash', 
-                    contents: basePrompt, 
-                    config: { 
-                        tools: [{googleSearch: {}}],
-                        systemInstruction: systemInstruction 
-                    } 
-                });
-                responseText = response.text;
-            } else if (aiProvider === 'openai' || (aiProvider === 'openrouter' && openRouterModel)) {
-                 const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
-                 if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
-                 const openai = new OpenAI(clientOptions);
-                 const model = aiProvider === 'openai' ? 'gpt-4o' : openRouterModel;
-                 addLog(`Using model: ${model}`);
-                 const response = await openai.chat.completions.create({ 
-                     model, 
-                     messages: [
-                         { role: "system", content: systemInstruction },
-                         { role: "user", content: basePrompt }
-                     ], 
-                     response_format: { type: "json_object" } 
-                 });
-                 responseText = response.choices[0].message.content;
-            } else if (aiProvider === 'claude') {
-                const anthropic = new Anthropic({ apiKey });
-                const response = await anthropic.messages.create({ 
-                    model: "claude-3-haiku-20240307", 
-                    max_tokens: 4096, 
-                    system: systemInstruction,
-                    messages: [{ role: "user", content: `${basePrompt}` }]
-                });
-                const block = response.content.find(b => b.type === 'text');
-                if (block && block.type === 'text') {
-                    responseText = block.text;
-                }
-            }
+        
+        let responseText = '';
+        if (aiProvider === 'gemini') {
+            const ai = new GoogleGenAI({ apiKey });
+            const response = await ai.models.generateContent({ 
+                model: 'gemini-2.5-flash', 
+                contents: basePrompt, 
+                config: { tools: [{googleSearch: {}}], systemInstruction: systemInstruction } 
+            });
+            responseText = response.text;
+        } else if (aiProvider === 'openai' || (aiProvider === 'openrouter' && openRouterModel)) {
+             const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
+             if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
+             const openai = new OpenAI(clientOptions);
+             const model = aiProvider === 'openai' ? 'gpt-4o' : openRouterModel;
+             addLog(`Using model: ${model}`);
+             const response = await openai.chat.completions.create({ 
+                 model, 
+                 messages: [{ role: "system", content: systemInstruction }, { role: "user", content: basePrompt }], 
+                 response_format: { type: "json_object" } 
+             });
+             responseText = response.choices[0].message.content;
+        } else if (aiProvider === 'claude') {
+            const anthropic = new Anthropic({ apiKey });
+            const response = await anthropic.messages.create({ 
+                model: "claude-3-haiku-20240307", 
+                max_tokens: 4096, 
+                system: systemInstruction,
+                messages: [{ role: "user", content: `${basePrompt}` }]
+            });
+            const block = response.content.find(b => b.type === 'text');
+            if (block && block.type === 'text') responseText = block.text;
+        }
 
-            let parsedResponse;
-            try {
-                parsedResponse = JSON.parse(cleanAiResponse(responseText));
-            } catch (e) {
-                addLog(`❌ AI Error: Failed to parse AI response as JSON.`);
-                addLog(`Raw AI Response: ${responseText}`);
-                throw new Error('AI failed to generate a valid JSON response.');
-            }
+        try {
+            return JSON.parse(cleanAiResponse(responseText));
+        } catch (e) {
+            addLog(`❌ AI Error: Failed to parse AI response as JSON.`);
+            addLog(`Raw AI Response: ${responseText}`);
+            throw new Error('AI failed to generate a valid JSON response.');
+        }
+    }, [aiProvider, apiKeys, openRouterModel, fetchedUrls, addLog]);
 
+    const handleGenerateContent = useCallback(async () => {
+        dispatch({ type: 'CLEAR_LOGS' });
+        dispatch({ type: 'SET_LOADING_STATE', payload: { content: true, featuredImage: false } });
+
+        const isUpdate = state.postToUpdate !== null;
+        const logMessage = isUpdate ? `🤖 Updating existing post. Contacting ${aiProvider}...` : `🤖 Contacting ${aiProvider} for content strategy...`;
+        addLog(logMessage);
+
+        try {
+            const parsedResponse = await generatePostLogic(rawContent, isUpdate);
             let { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = parsedResponse;
             
              // --- Phase 1.5: Verify and Correct Reference Links ---
@@ -1595,6 +1695,7 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
                         const correctionPrompt = `You are a link correction specialist. Your task is to find high-quality, relevant, and working replacements for a list of broken URLs for a blog post.\n\n**Blog Post Title:** "${title}"\n\n**Broken URLs:**\n${brokenLinks.map(url => `- ${url}`).join('\n')}\n\n**Instructions:**\n1. For each broken URL, find a new, 100% working, and topically relevant URL from a high-authority domain.\n2. The replacement link MUST lead to a live webpage (HTTP 200 OK).\n3. The content of the new page must be highly relevant to the original (presumably intended) content of the broken link.\n4. Respond with ONLY a raw JSON object mapping the original broken URL to the new, working URL. Do not include any other text, explanations, or markdown.\n\n**JSON Output Format:**\n{\n  "original_broken_url_1": "new_working_url_1",\n  "original_broken_url_2": "new_working_url_2"\n}`;
                         
                         let correctionText = '';
+                        const apiKey = apiKeys[aiProvider];
                         if (aiProvider === 'gemini') {
                             const ai = new GoogleGenAI({ apiKey });
                             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: correctionPrompt, config: { tools: [{googleSearch: {}}] } });
@@ -1763,7 +1864,61 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
         } finally {
             dispatch({ type: 'SET_LOADING_STATE', payload: { content: false } });
         }
-    }, [aiProvider, apiKeys, openRouterModel, rawContent, fetchedUrls, wpUrl, wpUser, wpPassword, addLog, handleGenerateImage, state.postToUpdate]);
+    }, [aiProvider, apiKeys, openRouterModel, rawContent, fetchedUrls, wpUrl, wpUser, wpPassword, addLog, handleGenerateImage, generatePostLogic, state.postToUpdate]);
+
+    const handleGenerateBatch = useCallback(async (topics) => {
+        const jobs = topics.split('\n').filter(t => t.trim()).map(title => ({ id: Date.now() + Math.random(), title, status: 'queued', result: null }));
+        if (jobs.length === 0) return;
+        
+        dispatch({ type: 'START_BATCH_GENERATION', payload: jobs });
+
+        const generateSinglePost = async (job) => {
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: 'processing' } });
+            addLog(`🤖 Starting batch job: "${job.title}"`);
+            const result = await generatePostLogic(job.title, false);
+            const { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = result;
+            return {
+                finalTitle: title,
+                finalContent: content,
+                slug, metaDescription, tags, categories,
+                featuredImage: { prompt: featuredImagePrompt, base64: '' },
+                infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '' })),
+            };
+        };
+
+        const onProgress = ({ item: job, result, success, error }) => {
+            const finalResult = success ? result : error.message;
+            if (success) addLog(`✅ Batch job finished: "${job.title}"`);
+            else addLog(`❌ Batch job failed: "${job.title}" - ${error.message}`);
+            
+            dispatch({
+                type: 'UPDATE_BATCH_JOB_STATUS',
+                payload: { id: job.id, status: success ? 'done' : 'error', result: finalResult }
+            });
+        };
+
+        await processPromiseQueue(jobs, generateSinglePost, onProgress, 5000); // 5 sec delay between API calls
+
+        addLog('🎉 Batch generation complete.');
+        dispatch({ type: 'FINISH_BATCH_GENERATION' });
+    }, [generatePostLogic, addLog]);
+    
+    const handleLoadBatchResultForReview = useCallback((result) => {
+        dispatch({ type: 'LOAD_BATCH_RESULT_FOR_REVIEW', payload: result });
+        addLog('📝 Loaded batch result. Generating images...');
+        
+        const imageTasks = [
+            { type: 'featured', id: 'featured', prompt: result.featuredImage.prompt },
+            ...result.infographics.map(info => ({ type: 'infographic', id: info.id, prompt: info.imagePrompt }))
+        ];
+
+        imageTasks.forEach(task => {
+            if (task.prompt) {
+                handleImageRegen(task.type, task.id, task.prompt);
+            }
+        });
+
+    }, [handleImageRegen, addLog]);
     
     const handlePublishOrUpdate = useCallback(async (mode) => {
         dispatch({ type: 'CLEAR_LOGS' });
@@ -1918,7 +2073,7 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
             case 1:
                 return <ConfigStep state={state} dispatch={dispatch} onFetchSitemap={handleFetchSitemap} onValidateKey={handleKeyValidation} onVerifyWpConnection={handleVerifyWpConnection} />;
             case 2:
-                return <ContentStep state={state} dispatch={dispatch} onGenerateContent={handleGenerateContent} onFetchWpPosts={handleFetchWpPosts} onAnalyzeAndSelect={handleAnalyzeAndSelect} onGeneratePostIdeas={handleGeneratePostIdeas} />;
+                return <ContentStep state={state} dispatch={dispatch} onGenerateContent={handleGenerateContent} onFetchWpPosts={handleFetchWpPosts} onAnalyzeAndSelect={handleAnalyzeAndSelect} onGeneratePostIdeas={handleGeneratePostIdeas} onGenerateBatch={handleGenerateBatch} onLoadBatchResultForReview={handleLoadBatchResultForReview} />;
             case 3:
                 return <ReviewPublishStep state={state} dispatch={dispatch} onPostAction={handlePublishOrUpdate} onImageRegen={handleImageRegen} />;
             default:
