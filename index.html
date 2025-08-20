@@ -93,6 +93,60 @@
             margin-left: auto;
             margin-right: auto;
         }
+        .promo-banner {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            margin: 0 auto 3rem auto;
+            max-width: 1100px;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+        .promo-banner:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+        }
+        .promo-banner-icon {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .promo-banner-icon svg {
+            width: 28px;
+            height: 28px;
+            color: white;
+        }
+        .promo-banner-text {
+            flex-grow: 1;
+        }
+        .promo-banner-text strong {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .promo-banner-text span {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        .promo-banner-cta {
+            font-size: 2rem;
+            font-weight: 300;
+            transition: transform 0.2s ease;
+        }
+        .promo-banner:hover .promo-banner-cta {
+            transform: translateX(5px);
+        }
         .progress-bar {
             display: flex;
             justify-content: space-between;
@@ -1279,6 +1333,23 @@
             .app-header h1 { font-size: 1.8rem; }
             .app-header .byline { font-size: 0.9rem; }
             p.subtitle { font-size: 0.95rem; margin-bottom: 2rem; }
+            
+            .promo-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+                padding: 1.5rem;
+            }
+            .promo-banner-text strong {
+                font-size: 1.1rem;
+            }
+            .promo-banner-text span {
+                font-size: 0.95rem;
+            }
+            .promo-banner-cta {
+                display: none;
+            }
+            
             .progress-step { font-size: 0.8rem; }
             .button-group { flex-direction: column; }
             

@@ -1185,6 +1185,23 @@ function appReducer(state, action) {
     }
 }
 
+const PromotionBanner = () => {
+    return (
+        <a href="https://viral-post.affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer" className="promo-banner">
+            <div className="promo-banner-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+            </div>
+            <div className="promo-banner-text">
+                <strong>Dominate Your Niche –</strong>
+                <span>Unlock Your Complete AI-Powered SEO Arsenal</span>
+            </div>
+            <div className="promo-banner-cta">
+                &rarr;
+            </div>
+        </a>
+    );
+};
+
 // Main App Component
 const App = () => {
     const [state, dispatch] = useReducer(appReducer, initialState);
@@ -2166,6 +2183,8 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
             </header>
             
             <p className="subtitle">Your enterprise-grade assistant for formatting, internally linking, and publishing SEO-optimized content directly to WordPress.</p>
+            
+            <PromotionBanner />
             
             {state.step === 1 && (
                 <div className="value-prop-highlight">
