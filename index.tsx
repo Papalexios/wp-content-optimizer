@@ -330,7 +330,6 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     const [activeSidebarTab, setActiveSidebarTab] = useState('update'); // 'update', 'create'
     const [createMode, setCreateMode] = useState('single'); // 'single', 'batch'
     const [batchTopics, setBatchTopics] = useState('');
-    const [isPostSelectorOpen, setIsPostSelectorOpen] = useState(false);
 
     // Post List State
     const [searchTerm, setSearchTerm] = useState('');
@@ -354,7 +353,6 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     const handlePostRowClick = (post) => {
         if (!post.canEdit || post.status === 'loading' || post.id === postToUpdate) return;
         onAnalyzeAndSelect(post);
-        setIsPostSelectorOpen(false); // Close modal on selection
     };
 
     const handleBatchItemReview = (job) => {
@@ -362,10 +360,11 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     };
     
     const getPostStatus = (post) => {
-        if (!post.canEdit) return { icon: '🔒', sort: 4, label: 'Locked' };
-        if (post.id === postToUpdate) return { icon: '✏️', sort: 0, label: 'Editing' };
-        if (post.updatedInSession) return { icon: '✅', sort: 2, label: 'Updated' };
-        return { icon: '📝', sort: 1, label: 'Not Touched' };
+        if (!post.canEdit) return { text: 'Locked', className: 'status-locked', sort: 4 };
+        if (post.id === postToUpdate) return { text: 'Editing', className: 'status-editing', sort: 0 };
+        if (post.updatedInSession) return { text: 'Updated', className: 'status-updated', sort: 2 };
+        if (post.status === 'loading') return { text: 'Analyzing', className: 'status-loading', sort: 1 };
+        return { text: 'Ready', className: 'status-ready', sort: 3 };
     };
 
     const sortedAndFilteredPosts = useMemo(() => {
@@ -396,6 +395,14 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                         aValue = a.keyword?.toLowerCase() || '';
                         bValue = b.keyword?.toLowerCase() || '';
                         break;
+                    case 'wordCount':
+                        aValue = a.wordCount ?? -1;
+                        bValue = b.wordCount ?? -1;
+                        break;
+                    case 'date':
+                        aValue = new Date(a.date).getTime();
+                        bValue = new Date(b.date).getTime();
+                        break;
                     case 'modified':
                         aValue = new Date(a.modified).getTime();
                         bValue = new Date(b.modified).getTime();
@@ -421,7 +428,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     };
 
     const getSortIndicator = (key) => {
-        if (sortConfig.key !== key) return null;
+        if (sortConfig.key !== key) return '↕️';
         return sortConfig.direction === 'ascending' ? '🔼' : '🔽';
     };
     
@@ -429,17 +436,9 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         <div className="workspace-welcome">
             <div className="icon">✍️</div>
             <h3>Content Hub</h3>
-            <p className="is-desktop-only">Ready to create? Start a brand new article or select an existing post from the sidebar to begin optimizing.</p>
-            <p className="is-mobile-only">Start a brand new article or select an existing post to begin optimizing.</p>
-
-            <div className="welcome-actions is-mobile-flex">
+            <p>Ready to create? Start a brand new article or select an existing post from the sidebar to begin optimizing.</p>
+            <div className="welcome-actions">
                  <button onClick={handleCreateNewClick} className="btn">+ Create New Post</button>
-                 <button onClick={() => {
-                     if (wpPosts.length === 0 && wpConnectionStatus === 'success') onFetchWpPosts();
-                     setIsPostSelectorOpen(true);
-                 }} className="btn btn-secondary" disabled={loading.posts || wpConnectionStatus !== 'success'}>
-                     {loading.posts ? 'Loading Posts...' : 'Update Existing Post'}
-                 </button>
              </div>
         </div>
     );
@@ -497,9 +496,6 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         <>
             <div className="edit-post-header">
                 <h4>Editing: <span>{wpPosts.find(p => p.id === postToUpdate)?.title.rendered || '...'}</span></h4>
-                <button className="btn btn-small btn-secondary" onClick={() => setIsPostSelectorOpen(true)}>
-                    Change Post
-                </button>
             </div>
             <div className="form-group">
                 <label htmlFor="rawContent">Content from Selected Post</label>
@@ -554,28 +550,34 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 <table className="posts-table">
                     <thead>
                         <tr>
-                            <th onClick={() => requestSort('status')} className={sortConfig.key === 'status' ? 'active' : ''}><span title="Status">St</span><span className="sort-indicator">{getSortIndicator('status')}</span></th>
+                            <th onClick={() => requestSort('status')} className={sortConfig.key === 'status' ? 'active' : ''}>Status<span className="sort-indicator">{getSortIndicator('status')}</span></th>
                             <th onClick={() => requestSort('title')} className={sortConfig.key === 'title' ? 'active' : ''}>Post Title<span className="sort-indicator">{getSortIndicator('title')}</span></th>
                             <th onClick={() => requestSort('keyword')} className={sortConfig.key === 'keyword' ? 'active' : ''}>Keyword<span className="sort-indicator">{getSortIndicator('keyword')}</span></th>
-                            <th onClick={() => requestSort('modified')} className={sortConfig.key === 'modified' ? 'active' : ''}>Last Mod.<span className="sort-indicator">{getSortIndicator('modified')}</span></th>
+                            <th onClick={() => requestSort('wordCount')} className={sortConfig.key === 'wordCount' ? 'active' : ''}>Words<span className="sort-indicator">{getSortIndicator('wordCount')}</span></th>
+                            <th onClick={() => requestSort('date')} className={sortConfig.key === 'date' ? 'active' : ''}>Published<span className="sort-indicator">{getSortIndicator('date')}</span></th>
+                            <th onClick={() => requestSort('modified')} className={sortConfig.key === 'modified' ? 'active' : ''}>Modified<span className="sort-indicator">{getSortIndicator('modified')}</span></th>
                             <th className="actions-cell">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {sortedAndFilteredPosts.map(post => {
-                            const { icon, label } = getPostStatus(post);
+                            const status = getPostStatus(post);
                             const classNames = [ 'post-row-clickable', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
                             return (
                                 <tr key={post.id} className={classNames} onClick={() => handlePostRowClick(post)}>
-                                    <td className="status-cell" title={label}>{icon}</td>
-                                    <td className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
-                                    <td className="keyword-cell" title={post.keyword}>{post.status === 'loading' ? <div className="keyword-loading-spinner"></div> : post.keyword}</td>
-                                    <td>{new Date(post.modified).toLocaleDateString()}</td>
-                                    <td className="actions-cell">
+                                    <td data-label="Status"><span className={`status-pill ${status.className}`}>{status.text}</span></td>
+                                    <td data-label="Title" className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
+                                    <td data-label="Keyword" className="keyword-cell" title={post.keyword}>
+                                        {post.status === 'loading' ? <div className="keyword-loading-spinner"></div> : (post.keyword || '–')}
+                                    </td>
+                                    <td data-label="Words">{post.wordCount ?? '–'}</td>
+                                    <td data-label="Published">{new Date(post.date).toLocaleDateString()}</td>
+                                    <td data-label="Modified">{new Date(post.modified).toLocaleDateString()}</td>
+                                    <td data-label="Actions" className="actions-cell">
                                         <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn-icon" title="View Live Post" onClick={e => e.stopPropagation()}>
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                         </a>
-                                        <button className="btn-icon" title="Analyze & Edit Post" disabled={!post.canEdit || post.status === 'loading'} onClick={e => e.stopPropagation()}>
+                                        <button className="btn-icon" title="Analyze & Edit Post" disabled={!post.canEdit || post.status === 'loading'} onClick={e => {e.stopPropagation(); handlePostRowClick(post);}}>
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                                         </button>
                                     </td>
@@ -584,30 +586,6 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                         })}
                     </tbody>
                 </table>
-                 <div className="posts-card-view">
-                    {sortedAndFilteredPosts.map(post => {
-                        const { icon, label } = getPostStatus(post);
-                        const classNames = [ 'post-card', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
-                        return (
-                             <div key={post.id} className={classNames} onClick={() => post.canEdit && post.status !== 'loading' && handlePostRowClick(post)}>
-                                <div className="post-card-header">
-                                    <span className="post-card-status" title={label}>{icon}</span>
-                                    <h5 className="post-card-title">{post.title.rendered}</h5>
-                                </div>
-                                <div className="post-card-body">
-                                    <p><strong>Keyword:</strong> {post.status === 'loading' ? 'Analyzing...' : (post.keyword || 'N/A')}</p>
-                                    <p><strong>Modified:</strong> {new Date(post.modified).toLocaleDateString()}</p>
-                                </div>
-                                <div className="post-card-actions">
-                                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn btn-small btn-secondary" onClick={e => e.stopPropagation()}>View</a>
-                                    <button className="btn btn-small" disabled={!post.canEdit || post.status === 'loading'}>
-                                        {post.status === 'loading' ? '...' : 'Edit'}
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
             </div>
         </>
     );
@@ -654,100 +632,45 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
             )}
         </div>
     );
-
-    const renderPostSelectorModal = () => {
-        if (!isPostSelectorOpen) return null;
-    
-        return (
-            <div className="post-selector-modal">
-                <div className="post-selector-content">
-                    <div className="post-selector-header">
-                        <h3>Select a Post to Edit</h3>
-                        <button onClick={() => setIsPostSelectorOpen(false)} className="btn-icon btn-close" aria-label="Close">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
-                    <div className="post-selector-controls">
-                        <div className="posts-filter-controls">
-                            <input type="text" placeholder="Search posts..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="posts-search-input" />
-                            <div className="checkbox-group" style={{marginTop: '0.75rem'}}>
-                                <input type="checkbox" id="hideUpdatedModal" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
-                                <label htmlFor="hideUpdatedModal">Hide done posts</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="post-selector-body">
-                        <div className="posts-card-view" style={{display: 'grid'}}>
-                            {sortedAndFilteredPosts.map(post => {
-                                const { icon, label } = getPostStatus(post);
-                                const classNames = [ 'post-card', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
-                                return (
-                                     <div key={post.id} className={classNames} onClick={() => post.canEdit && post.status !== 'loading' && handlePostRowClick(post)}>
-                                        <div className="post-card-header">
-                                            <span className="post-card-status" title={label}>{icon}</span>
-                                            <h5 className="post-card-title">{post.title.rendered}</h5>
-                                        </div>
-                                        <div className="post-card-body">
-                                            <p><strong>Keyword:</strong> {post.status === 'loading' ? 'Analyzing...' : (post.keyword || 'N/A')}</p>
-                                            <p><strong>Modified:</strong> {new Date(post.modified).toLocaleDateString()}</p>
-                                        </div>
-                                        <div className="post-card-actions">
-                                            <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn btn-small btn-secondary" onClick={e => e.stopPropagation()}>View</a>
-                                            <button className="btn btn-small" disabled={!post.canEdit || post.status === 'loading'}>
-                                                {post.id === postToUpdate ? 'Selected' : 'Edit'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
     
     return (
-        <>
-            <div className="step-container content-hub-layout" id="step-2-content">
-                <aside className="content-hub-sidebar is-desktop-only">
-                    <div className="sidebar-tabs">
-                        <button className={`tab-btn ${activeSidebarTab === 'update' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('update')}>Update Existing</button>
-                        <button className={`tab-btn ${activeSidebarTab === 'create' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('create')}>Create New</button>
-                    </div>
+        <div className="step-container content-hub-layout" id="step-2-content">
+            <aside className="content-hub-sidebar">
+                <div className="sidebar-tabs">
+                    <button className={`tab-btn ${activeSidebarTab === 'update' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('update')}>Update Existing</button>
+                    <button className={`tab-btn ${activeSidebarTab === 'create' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('create')}>Create New</button>
+                </div>
 
-                    {activeSidebarTab === 'update' && renderPostList()}
-                    
-                    {activeSidebarTab === 'create' && (
-                        <div className="create-new-content">
-                            <div className="create-mode-tabs">
-                                <button className={`tab-btn ${createMode === 'single' ? 'active' : ''}`} onClick={() => { setCreateMode('single'); setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Single Post</button>
-                                <button className={`tab-btn ${createMode === 'batch' ? 'active' : ''}`} onClick={() => { setCreateMode('batch'); setActiveView('batch'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Batch Create</button>
+                {activeSidebarTab === 'update' && renderPostList()}
+                
+                {activeSidebarTab === 'create' && (
+                    <div className="create-new-content">
+                        <div className="create-mode-tabs">
+                            <button className={`tab-btn ${createMode === 'single' ? 'active' : ''}`} onClick={() => { setCreateMode('single'); setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Single Post</button>
+                            <button className={`tab-btn ${createMode === 'batch' ? 'active' : ''}`} onClick={() => { setCreateMode('batch'); setActiveView('batch'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Batch Create</button>
+                        </div>
+                        {createMode === 'batch' ? renderBatchCreateView() : (
+                            <div style={{paddingTop: '1rem'}}>
+                                <button onClick={() => {setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' });}} className="btn">+ Create New Post</button>
                             </div>
-                            {createMode === 'batch' ? renderBatchCreateView() : (
-                                <div style={{paddingTop: '1rem'}}>
-                                    <button onClick={() => {setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' });}} className="btn">+ Create New Post</button>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        )}
+                    </div>
+                )}
 
-                </aside>
-                <main className="content-hub-workspace">
-                    {activeView === 'welcome' && renderWelcomeView()}
-                    {activeView === 'new' && renderNewPostView()}
-                    {activeView === 'edit' && renderEditPostView()}
-                    {activeView === 'batch' && (
-                        <div className="workspace-welcome">
-                            <div className="icon">🚀</div>
-                            <h3>Batch Generation</h3>
-                            <p>Configure your batch job in the sidebar. Progress and completed posts will appear there once you begin.</p>
-                        </div>
-                    )}
-                </main>
-            </div>
-            {renderPostSelectorModal()}
-        </>
+            </aside>
+            <main className="content-hub-workspace">
+                {activeView === 'welcome' && renderWelcomeView()}
+                {activeView === 'new' && renderNewPostView()}
+                {activeView === 'edit' && renderEditPostView()}
+                {activeView === 'batch' && (
+                    <div className="workspace-welcome">
+                        <div className="icon">🚀</div>
+                        <h3>Batch Generation</h3>
+                        <p>Configure your batch job in the sidebar. Progress and completed posts will appear there once you begin.</p>
+                    </div>
+                )}
+            </main>
+        </div>
     );
 };
 
@@ -1026,7 +949,7 @@ const initialState = {
     openRouterModel: 'google/gemini-2.5-flash',
     duplicateInfo: { similarUrl: null, postId: null },
     publishMode: 'publish', // 'publish' or 'update'
-    wpPosts: [], // { id, title, link, date, modified, keyword, content, status, updatedInSession, canEdit }
+    wpPosts: [], // { id, title, link, date, modified, keyword, content, status, updatedInSession, canEdit, wordCount }
     postToUpdate: null, // number | null
     postIdeas: [],
     batchJobs: [], // { id, title, status, result }
@@ -1095,6 +1018,7 @@ function appReducer(state, action) {
             const isAdminOrEditor = roles.includes('administrator') || roles.includes('editor');
             const postsWithEditability = action.payload.map(p => ({
                 ...p,
+                wordCount: null, // Initialize wordCount
                 // If the user is an admin/editor, they can edit everything.
                 // Otherwise, fall back to checking the API's permission link.
                 canEdit: isAdminOrEditor || !!(p._links && p._links['wp:action-edit'])
@@ -1108,7 +1032,7 @@ function appReducer(state, action) {
         case 'SET_WP_POST_DATA':
             return {
                 ...state,
-                wpPosts: state.wpPosts.map(p => p.id === action.payload.id ? { ...p, keyword: action.payload.keyword, status: 'done' } : p),
+                wpPosts: state.wpPosts.map(p => p.id === action.payload.id ? { ...p, keyword: action.payload.keyword, wordCount: action.payload.wordCount, status: 'done' } : p),
                 rawContent: action.payload.content,
                 postToUpdate: action.payload.id,
             };
@@ -1188,15 +1112,19 @@ function appReducer(state, action) {
 const PromotionBanner = () => {
     return (
         <a href="https://viral-post.affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer" className="promo-banner">
-            <div className="promo-banner-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 21.75l-.648-1.188a2.25 2.25 0 01-1.423-1.423L13.5 18.75l1.188-.648a2.25 2.25 0 011.423-1.423L16.25 15l.648 1.188a2.25 2.25 0 011.423 1.423L18.75 18l-1.188.648a2.25 2.25 0 01-1.423 1.423z" /></svg>
-            </div>
-            <div className="promo-banner-text">
-                <strong>Dominate Your Niche –</strong>
-                <span>Unlock Your Complete AI-Powered SEO Arsenal</span>
-            </div>
-            <div className="promo-banner-cta">
-                &rarr;
+            <div className="promo-banner-bg"></div>
+            <div className="promo-banner-content">
+                <div className="promo-banner-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 21.75l-.648-1.188a2.25 2.25 0 01-1.423-1.423L13.5 18.75l1.188-.648a2.25 2.25 0 011.423-1.423L16.25 15l.648 1.188a2.25 2.25 0 011.423 1.423L18.75 18l-1.188.648a2.25 2.25 0 01-1.423 1.423z" /></svg>
+                </div>
+                <div className="promo-banner-text">
+                    <strong>Dominate Your Niche</strong>
+                    <span>Unlock Your Complete AI-Powered SEO Arsenal</span>
+                </div>
+                <div className="promo-banner-cta">
+                    <span>Unlock Your Arsenal</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                </div>
             </div>
         </a>
     );
@@ -1348,10 +1276,10 @@ const App = () => {
             }
 
             const posts = await response.json();
-            posts.sort((a, b) => new Date(a.modified).getTime() - new Date(b.modified).getTime());
+            posts.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
             const postsWithStatus = posts.map(p => ({ ...p, status: 'idle', keyword: '', updatedInSession: false }));
             dispatch({ type: 'SET_WP_POSTS', payload: postsWithStatus });
-            addLog(`✅ Found ${posts.length} published posts. Sorted by oldest first.`);
+            addLog(`✅ Found ${posts.length} published posts. Sorted by most recently modified first.`);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             addLog(`❌ Error fetching posts: ${errorMessage}`);
@@ -1379,6 +1307,7 @@ const App = () => {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = contentHtml;
             const textContent = tempDiv.textContent || tempDiv.innerText || "";
+            const wordCount = textContent ? textContent.trim().split(/\s+/).length : 0;
             
             // 2. Get keyword from AI
             addLog(`🤖 Asking AI for main keyword...`);
@@ -1425,7 +1354,7 @@ const App = () => {
             addLog(`✅ Keyword identified: "${keyword}". Loading content into editor.`);
             dispatch({
                 type: 'SET_WP_POST_DATA',
-                payload: { id: post.id, link: post.link, keyword, content: contentHtml }
+                payload: { id: post.id, link: post.link, keyword, content: contentHtml, wordCount }
             });
 
         } catch (error) {
