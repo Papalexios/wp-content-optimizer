@@ -1108,6 +1108,93 @@
         .post-idea-card .btn-small:hover {
             background-color: var(--primary-color);
         }
+        
+        /* Topical Cluster Styles */
+        .cluster-view-container h4, .cluster-plan-view h4 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            color: var(--text-heading-color);
+        }
+        .cluster-plan-view label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light-color);
+            margin-top: 1.5rem;
+        }
+        .pillar-post-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .pillar-post-card.status-new {
+             border-left: 3px solid var(--success-color);
+        }
+         .pillar-post-card.status-existing {
+             border-left: 3px solid var(--warning-color);
+        }
+        .pillar-post-card label {
+            color: var(--text-heading-color);
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+        .pillar-post-card input:disabled {
+            background-color: #2a3546;
+            opacity: 0.7;
+            cursor: default;
+        }
+        .cluster-posts-list {
+            margin-top: 1rem;
+        }
+        .cluster-post-item {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding: 0.25rem;
+            border-radius: 6px;
+        }
+        .cluster-post-item.status-new {
+            background-color: rgba(34, 197, 94, 0.1);
+        }
+        .cluster-post-item.status-existing {
+            background-color: rgba(249, 115, 22, 0.1);
+        }
+        .cluster-post-item input {
+            flex-grow: 1;
+        }
+        .cluster-post-item input:disabled {
+            background: transparent;
+            border-color: transparent;
+            opacity: 0.8;
+            cursor: default;
+            padding-left: 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 4px;
+            color: #111827;
+            flex-shrink: 0;
+        }
+        .status-badge.status-new { background-color: var(--success-color); }
+        .status-badge.status-existing { background-color: var(--warning-color); }
+        .cluster-post-item .post-link {
+            flex-shrink: 0;
+        }
+
+        .plan-actions {
+            margin-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
 
         /* Base styles for mobile tabs (hidden on desktop) */
         .review-tabs { display: none; }

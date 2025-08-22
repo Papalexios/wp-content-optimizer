@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
@@ -339,13 +340,11 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
     );
 };
 
-const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAnalyzeAndSelect, onGeneratePostIdeas, onGenerateBatch, onLoadBatchResultForReview }) => {
-    const { rawContent, loading, wpPosts, postToUpdate, wpConnectionStatus, postIdeas, fetchedUrls, batchJobs } = state;
+const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAnalyzeAndSelect, onGeneratePostIdeas, onGenerateBatch, onLoadBatchResultForReview, onGenerateClusterPlan, onGenerateClusterArticles, onProcessFullCluster, onDiscoverClusters, onOptimizeClusterPost }) => {
+    const { rawContent, loading, wpPosts, postToUpdate, wpConnectionStatus, postIdeas, fetchedUrls, batchJobs, clusterTopic, clusterPlan, suggestedClusters } = state;
     
     // UI State
-    const [activeView, setActiveView] = useState('welcome'); // 'welcome', 'new', 'edit', 'batch'
-    const [createMode, setCreateMode] = useState('single'); // 'single', 'batch'
-    const [batchTopics, setBatchTopics] = useState('');
+    const [activeView, setActiveView] = useState('welcome'); // 'welcome', 'new', 'edit', 'batch', 'cluster', 'clusterPlan', 'discover'
 
     // Post List State
     const [searchTerm, setSearchTerm] = useState('');
@@ -355,29 +354,39 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     useEffect(() => {
         if (postToUpdate) {
             setActiveView('edit');
-        } else {
-            // If postToUpdate is cleared, go back to welcome screen for this workspace
-            if (activeView === 'edit') {
-                setActiveView('welcome');
-            }
+        } else if (clusterPlan) {
+            setActiveView('clusterPlan');
+        } else if (!postToUpdate && activeView === 'edit') {
+            setActiveView('welcome');
         }
-    }, [postToUpdate]);
+    }, [postToUpdate, clusterPlan]);
     
     const handleCreateNewClick = () => {
         dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+        dispatch({ type: 'CLEAR_CLUSTER_PLAN' });
         setActiveView('new');
     };
     
     const handleCreateBatchClick = () => {
          dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+         dispatch({ type: 'CLEAR_CLUSTER_PLAN' });
          setActiveView('batch');
     }
+    
+    const handleClusterClick = () => {
+        dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+        setActiveView('cluster');
+    };
+
+    const handleDiscoverClick = () => {
+        dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+        setActiveView('discover');
+    };
 
     const handlePostRowClick = (post) => {
         if (!post.canEdit || post.status === 'loading' || post.id === postToUpdate) return;
         onAnalyzeAndSelect(post);
         
-        // Scroll to the editing workspace
         const workspace = document.getElementById('workspace-container');
         if(workspace) {
             workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -465,7 +474,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         <div className="workspace-welcome">
             <div className="icon">✍️</div>
             <h3>Content Hub</h3>
-            <p>Ready to create? Start a brand new article or select an existing post from the list above to begin optimizing.</p>
+            <p>Ready to create? Start a new article, generate a batch, or build a complete topical cluster. You can also select an existing post from the list above to begin optimizing.</p>
         </div>
     );
     
@@ -511,7 +520,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
             </div>
              <div className="button-group">
                 <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Config</button>
-                <button onClick={onGenerateContent} className="btn" disabled={loading.content || !rawContent}>
+                <button onClick={() => onGenerateContent()} className="btn" disabled={loading.content || !rawContent}>
                     {loading.content ? 'Generating...' : 'Optimize New Content'}
                 </button>
             </div>
@@ -536,7 +545,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
             </div>
              <div className="button-group">
                 <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Config</button>
-                <button onClick={onGenerateContent} className="btn" disabled={loading.content || !rawContent}>
+                <button onClick={() => onGenerateContent()} className="btn" disabled={loading.content || !rawContent}>
                     {loading.content ? 'Generating...' : 'Optimize Existing Content'}
                 </button>
             </div>
@@ -553,6 +562,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 <div className="post-list-actions">
                     <button onClick={handleCreateNewClick} className="btn">+ Create New Post</button>
                     <button onClick={handleCreateBatchClick} className="btn btn-secondary">🚀 Batch Create</button>
+                    <button onClick={handleClusterClick} className="btn btn-secondary">🌐 Topical Cluster</button>
+                    <button onClick={handleDiscoverClick} className="btn btn-secondary">🔍 Discover Clusters</button>
                 </div>
             </div>
 
@@ -630,6 +641,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         const totalJobs = batchJobs.length;
         const completedJobs = batchJobs.filter(j => j.status === 'done' || j.status === 'error').length;
         const processingJobsCount = batchJobs.filter(j => j.status === 'processing').length;
+        const [batchTopics, setBatchTopics] = useState('');
         const topicsCount = batchTopics.split('\n').filter(t => t.trim()).length;
         
         return (
@@ -678,7 +690,163 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
             </div>
         );
     };
+
+    const renderClusterView = () => (
+        <div className="cluster-view-container">
+            <h4>Build a Topical Cluster</h4>
+            <p className="help-text">Enter a core topic to build your website's authority. The AI will analyze your existing posts to create a strategic plan, suggesting new articles and identifying existing ones to update, avoiding keyword cannibalization.</p>
+             {wpPosts.length === 0 && (
+                <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
+                    <p><strong>Please load your published posts first.</strong> This allows the AI to create a cluster plan that integrates with your existing content and avoids duplication.</p>
+                </div>
+            )}
+            <div className="form-group">
+                <input
+                    type="text"
+                    id="clusterTopic"
+                    value={clusterTopic}
+                    onChange={e => dispatch({ type: 'SET_CLUSTER_TOPIC', payload: e.target.value })}
+                    placeholder="e.g., Affiliate Marketing for Beginners"
+                    disabled={loading.plan}
+                />
+            </div>
+            <button onClick={onGenerateClusterPlan} className="btn" disabled={loading.plan || !clusterTopic.trim() || wpPosts.length === 0}>
+                {loading.plan ? 'Planning...' : 'Generate Cluster Plan'}
+            </button>
+        </div>
+    );
     
+    const renderClusterPlanView = () => {
+        if (!clusterPlan) return null;
+
+        const newArticlesToGenerate = [clusterPlan.pillar, ...clusterPlan.clusters].filter(p => p.status === 'new').length;
+        const allArticlesToProcess = [clusterPlan.pillar, ...clusterPlan.clusters].length;
+
+        const handlePillarTitleChange = (e) => {
+            dispatch({type: 'UPDATE_CLUSTER_PLAN', payload: { ...clusterPlan, pillar: { ...clusterPlan.pillar, title: e.target.value }}});
+        };
+        
+        const handleClusterTitleChange = (index, newTitle) => {
+            const newClusters = [...clusterPlan.clusters];
+            newClusters[index] = { ...newClusters[index], title: newTitle };
+            dispatch({ type: 'UPDATE_CLUSTER_PLAN', payload: { ...clusterPlan, clusters: newClusters }});
+        };
+
+        const handleRemoveCluster = (index) => {
+            const newClusters = clusterPlan.clusters.filter((_, i) => i !== index);
+            dispatch({ type: 'UPDATE_CLUSTER_PLAN', payload: { ...clusterPlan, clusters: newClusters } });
+        };
+
+        const handleAddCluster = () => {
+             const newClusters = [...clusterPlan.clusters, { title: 'New Cluster Post Title', status: 'new' }];
+             dispatch({ type: 'UPDATE_CLUSTER_PLAN', payload: { ...clusterPlan, clusters: newClusters } });
+        };
+
+
+        return (
+            <div className="cluster-plan-view">
+                <h4>Review Your Topical Cluster Plan</h4>
+                <p className="help-text">Review and edit the plan. "Update" items are existing posts to optimize. "New" items are content gaps to fill. The AI will generate all "New" articles and automatically interlink them.</p>
+
+                <div className={`pillar-post-card status-${clusterPlan.pillar.status}`}>
+                    <label>
+                        Pillar Post 
+                        <span className={`status-badge status-${clusterPlan.pillar.status}`}>{clusterPlan.pillar.status === 'existing' ? 'Update' : 'New'}</span>
+                        {clusterPlan.pillar.url && (
+                             <a href={clusterPlan.pillar.url} target="_blank" rel="noopener noreferrer" className="btn-icon post-link" title="View Live Post">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                             </a>
+                        )}
+                    </label>
+                    <input type="text" value={clusterPlan.pillar.title} onChange={handlePillarTitleChange} disabled={clusterPlan.pillar.status === 'existing'} />
+                </div>
+
+                <div className="cluster-posts-list">
+                    <label>Cluster Posts</label>
+                    {clusterPlan.clusters.map((post, index) => (
+                        <div key={index} className={`cluster-post-item status-${post.status}`}>
+                            <input type="text" value={post.title} onChange={e => handleClusterTitleChange(index, e.target.value)} disabled={post.status === 'existing'} />
+                            <span className={`status-badge status-${post.status}`}>{post.status === 'existing' ? 'Update' : 'New'}</span>
+                             {post.url && (
+                                <a href={post.url} target="_blank" rel="noopener noreferrer" className="btn-icon post-link" title="View Live Post">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                </a>
+                            )}
+                            {post.status === 'existing' && (
+                                <button className="btn btn-small" style={{marginLeft: 'auto'}} onClick={() => onOptimizeClusterPost(post.title)} disabled={loading.content || loading.batch}>Optimize</button>
+                            )}
+                            <button className="btn-icon" title="Remove" onClick={() => handleRemoveCluster(index)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" /></svg>
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="plan-actions">
+                    <button className="btn btn-secondary" style={{width: 'auto'}} onClick={handleAddCluster}>+ Add Idea</button>
+                </div>
+                
+                <div className="button-group" style={{marginTop: '2rem'}}>
+                    <button onClick={onGenerateClusterPlan} className="btn btn-secondary" disabled={loading.plan || loading.batch}>
+                        {loading.plan ? 'Regenerating...' : 'Regenerate Plan'}
+                    </button>
+                    <button onClick={onGenerateClusterArticles} className="btn btn-secondary" disabled={loading.batch || newArticlesToGenerate === 0}>
+                        {`Generate ${newArticlesToGenerate} New Articles`}
+                    </button>
+                     <button onClick={onProcessFullCluster} className="btn" disabled={loading.batch || allArticlesToProcess === 0}>
+                        {loading.batch ? 'Processing Cluster...' : `Optimize & Generate Full Cluster (${allArticlesToProcess})`}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+    
+    const renderDiscoverClustersView = () => {
+        const handleSelectTopic = (topic) => {
+            dispatch({ type: 'SET_CLUSTER_TOPIC', payload: topic });
+            setActiveView('cluster');
+        };
+
+        return (
+            <div className="discover-clusters-view">
+                <p className="help-text">Let AI analyze all your published posts to find the most promising topical cluster opportunities to build your site's authority.</p>
+                {wpPosts.length === 0 && (
+                    <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
+                        <p><strong>Please load your published posts first.</strong> Cluster discovery requires your existing content library for analysis.</p>
+                    </div>
+                )}
+                <button onClick={onDiscoverClusters} className="btn" disabled={loading.discoverClusters || wpPosts.length === 0}>
+                    {loading.discoverClusters ? 'Analyzing...' : 'Analyze & Suggest Top 4 Clusters'}
+                </button>
+
+                {suggestedClusters.length > 0 && (
+                     <div className="post-ideas-list" style={{marginTop: '2rem'}}>
+                        <h4>Suggested Cluster Topics</h4>
+                        {suggestedClusters.map((cluster, index) => (
+                            <div className="post-idea-card" key={index}>
+                                <h5>{cluster.topic}</h5>
+                                <p><strong>Rationale:</strong> {cluster.rationale}</p>
+                                <details>
+                                    <summary>View {cluster.supportingPosts.length} supporting articles</summary>
+                                    <ul>
+                                        {cluster.supportingPosts.map(p => <li key={p}>{p}</li>)}
+                                    </ul>
+                                </details>
+                                <button
+                                    className="btn btn-small"
+                                    style={{marginTop: '1rem'}}
+                                    onClick={() => handleSelectTopic(cluster.topic)}
+                                >
+                                    Build This Cluster
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className="step-container" id="step-2-content">
             {renderPostList()}
@@ -707,6 +875,23 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                                 <h2>Batch Create Posts</h2>
                                 {renderBatchCreateView()}
                              </div>
+                        )}
+                        {activeView === 'cluster' && (
+                            <div className="create-new-form">
+                                <h2>Topical Cluster Strategy</h2>
+                                {renderClusterView()}
+                            </div>
+                        )}
+                         {activeView === 'clusterPlan' && (
+                            <div className="create-new-form">
+                                {loading.batch ? renderBatchCreateView() : renderClusterPlanView()}
+                            </div>
+                        )}
+                         {activeView === 'discover' && (
+                            <div className="create-new-form">
+                                <h2>Discover Topical Cluster Opportunities</h2>
+                                {renderDiscoverClustersView()}
+                            </div>
                         )}
                     </div>
                 )}
@@ -966,7 +1151,7 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
 
 const initialState = {
     step: 1,
-    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false, wpConnection: false, batch: false },
+    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false, wpConnection: false, batch: false, plan: false, discoverClusters: false },
     logs: [],
     result: null,
     wpUrl: '',
@@ -998,6 +1183,9 @@ const initialState = {
     wpConnectionError: '',
     wpUserRoles: [],
     wpCategories: [],
+    clusterTopic: '',
+    clusterPlan: null, // { pillar: { title, status, url? }, clusters: [{ title, status, url? }] }
+    suggestedClusters: [], // { topic: string, rationale: string, supportingPosts: string[] }
 };
 
 
@@ -1130,6 +1318,24 @@ function appReducer(state, action) {
                 postToUpdate: null,
                 duplicateInfo: { similarUrl: null, postId: null },
             };
+        case 'SET_CLUSTER_TOPIC':
+            return { ...state, clusterTopic: action.payload };
+        case 'START_PLAN_GENERATION':
+            return { ...state, loading: { ...state.loading, plan: true } };
+        case 'FINISH_PLAN_GENERATION':
+            return { ...state, loading: { ...state.loading, plan: false } };
+        case 'SET_CLUSTER_PLAN':
+            return { ...state, clusterPlan: action.payload };
+        case 'UPDATE_CLUSTER_PLAN':
+            return { ...state, clusterPlan: action.payload };
+        case 'CLEAR_CLUSTER_PLAN':
+            return { ...state, clusterTopic: '', clusterPlan: null, batchJobs: [] };
+        case 'START_DISCOVER_CLUSTERS':
+            return { ...state, loading: { ...state.loading, discoverClusters: true } };
+        case 'FINISH_DISCOVER_CLUSTERS':
+            return { ...state, loading: { ...state.loading, discoverClusters: false } };
+        case 'SET_SUGGESTED_CLUSTERS':
+            return { ...state, suggestedClusters: action.payload };
         case 'RESET_FOR_NEW_POST':
             return {
                 ...state,
@@ -1150,6 +1356,9 @@ function appReducer(state, action) {
                 publishMode: 'publish',
                 postToUpdate: null,
                 postIdeas: [],
+                clusterTopic: '',
+                clusterPlan: null,
+                batchJobs: [],
             };
         default:
             throw new Error(`Unhandled action type: ${action.type}`);
@@ -1184,7 +1393,7 @@ const App = () => {
     const {
         sitemapUrl, urlLimit, aiProvider, apiKeys, openRouterModel, rawContent,
         fetchedUrls, wpUrl, wpUser, wpPassword, finalTitle, slug, finalContent,
-        tags, categories, featuredImage, infographics, metaDescription
+        tags, categories, featuredImage, infographics, metaDescription, clusterPlan, clusterTopic
     } = state;
 
     const addLog = useCallback((message) => dispatch({type: 'ADD_LOG', payload: message}), []);
@@ -1614,7 +1823,7 @@ ${fetchedUrls.join('\n')}
         }
     }, [handleGenerateImage, featuredImage, infographics, dispatch]);
     
-    const generatePostLogic = useCallback(async (contentToProcess, isUpdate = false) => {
+    const generatePostLogic = useCallback(async (contentToProcess, isUpdate = false, clusterContext = null) => {
         const apiKey = apiKeys[aiProvider];
         if (!apiKey) throw new Error(`API Key for ${aiProvider} is not set.`);
         
@@ -1632,7 +1841,17 @@ You are updating an existing article. Your mission is to substantially improve i
         const urlsForContext = fetchedUrls;
         let linkingInstruction;
 
-        if (urlsForContext.length > 0) {
+        if (clusterContext) {
+            const { plan, currentTitle } = clusterContext;
+            const otherArticles = [plan.pillar, ...plan.clusters].filter(p => p.title !== currentTitle).map(p => p.title);
+            const isPillar = currentTitle === plan.pillar.title;
+
+            if (isPillar) {
+                 linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** This is the PILLAR post of a topical cluster. You are REQUIRED to link to AT LEAST 5 of the supporting cluster posts. Here is the list of cluster posts to link to: ${plan.clusters.map(c => c.title).join('; ')}. The anchor text must be natural, keyword-rich, and contextually appropriate. Do not place links in headings. Do not link to any other URLs.`;
+            } else {
+                 linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** This article is a CLUSTER post. You are REQUIRED to link back to the central PILLAR post: "${plan.pillar.title}". You SHOULD also link to 1-2 other relevant CLUSTER posts from this list: ${otherArticles.filter(t => t !== plan.pillar.title).join('; ')}. The anchor text must be natural and contextually appropriate. Do not place links in headings. Do not link to any other URLs.`;
+            }
+        } else if (urlsForContext.length > 0) {
             linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** You are required to insert between 6 and 10 relevant internal links into the main body of the article. These links **MUST ONLY** be chosen from the "Website URLs for Context & Internal Linking" list provided below. Do not use any other URLs for internal links. The anchor text must be natural, keyword-rich, and contextually appropriate. Do not place links in headings.`;
         } else {
             linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** You are strictly forbidden from adding any internal links to this article. The necessary list of site URLs was not provided. Do not invent links or use URLs from your general knowledge. This is a non-negotiable rule.`;
@@ -1705,7 +1924,7 @@ ${categoryListForPrompt}
 
 **Website URLs for Context & Internal Linking:**
 ---
-${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTERNAL LINKS'}
+${urlsForContext.length > 0 && !clusterContext ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTERNAL LINKS UNLESS SPECIFIED IN THE INTERNAL LINKING DIRECTIVE'}
 ---
 `;
         
@@ -1751,16 +1970,17 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
         }
     }, [aiProvider, apiKeys, openRouterModel, fetchedUrls, addLog, state.wpCategories]);
 
-    const handleGenerateContent = useCallback(async () => {
+    const handleGenerateContent = useCallback(async (contentOverride = null) => {
         dispatch({ type: 'CLEAR_LOGS' });
         dispatch({ type: 'SET_LOADING_STATE', payload: { content: true, featuredImage: false } });
 
+        const contentToProcess = contentOverride !== null ? contentOverride : rawContent;
         const isUpdate = state.postToUpdate !== null;
         const logMessage = isUpdate ? `🤖 Updating existing post. Contacting ${aiProvider}...` : `🤖 Contacting ${aiProvider} for content strategy...`;
         addLog(logMessage);
 
         try {
-            const parsedResponse = await generatePostLogic(rawContent, isUpdate);
+            const parsedResponse = await generatePostLogic(contentToProcess, isUpdate);
             let { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = parsedResponse;
             
              // --- Phase 1.5: Verify and Correct Reference Links ---
@@ -1796,14 +2016,14 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
                             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: correctionPrompt, config: { tools: [{googleSearch: {}}] } });
                             correctionText = response.text;
                         } else if (aiProvider === 'openai' || aiProvider === 'openrouter') {
-                            const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
+                            const clientOptions: any = { apiKey: apiKey, dangerouslyAllowBrowser: true };
                             if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
                             const openai = new OpenAI(clientOptions);
                             const model = aiProvider === 'openai' ? 'gpt-4o' : openRouterModel;
                             const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: correctionPrompt }], response_format: { type: "json_object" } });
                             correctionText = response.choices[0].message.content;
                         } else if (aiProvider === 'claude') {
-                            const anthropic = new Anthropic({ apiKey });
+                            const anthropic = new Anthropic({ apiKey: apiKey });
                             const response = await anthropic.messages.create({ model: "claude-3-haiku-20240307", max_tokens: 1024, messages: [{ role: "user", content: correctionPrompt }] });
                             const block = response.content.find(b => b.type === 'text');
                             if (block?.type === 'text') correctionText = block.text;
@@ -1853,7 +2073,7 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
                 tags: tags || [],
                 categories: categories || [],
                 featuredImage: { prompt: featuredImagePrompt, base64: '' },
-                infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '', isGenerating: false })),
+                infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '' })),
             }});
 
             addLog('✅ Text generation complete.');
@@ -1959,7 +2179,7 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
         } finally {
             dispatch({ type: 'SET_LOADING_STATE', payload: { content: false } });
         }
-    }, [aiProvider, apiKeys, openRouterModel, rawContent, fetchedUrls, wpUrl, wpUser, wpPassword, addLog, handleGenerateImage, generatePostLogic, state.postToUpdate, state.wpCategories]);
+    }, [aiProvider, apiKeys, openRouterModel, rawContent, fetchedUrls, wpUrl, wpUser, wpPassword, addLog, handleGenerateImage, generatePostLogic, state.postToUpdate, state.wpCategories, state.wpPosts]);
 
     const handleGenerateBatch = useCallback(async (topics) => {
         const jobs = topics.split('\n').filter(t => t.trim()).map(title => ({ id: Date.now() + Math.random(), title, status: 'queued', result: null }));
@@ -1984,7 +2204,7 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
         let successCount = 0;
         let errorCount = 0;
 
-        const onProgress = ({ item: job, result, success, error }: { item: typeof jobs[0], result?: Awaited<ReturnType<typeof generateSinglePost>>, error?: Error, index: number, success: boolean }) => {
+        const onProgress = ({ item: job, result, success, error }: { item: typeof jobs[0], result?: Awaited<ReturnType<typeof generateSinglePost>>, index: number, success: boolean, error?: Error }) => {
             const finalResult = success ? result : error?.message || 'An unknown error occurred.';
             if (success) {
                 successCount++;
@@ -2006,6 +2226,160 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
         dispatch({ type: 'FINISH_BATCH_GENERATION' });
     }, [generatePostLogic, addLog]);
     
+    const handleGenerateClusterPlan = useCallback(async () => {
+        if (state.wpPosts.length === 0) {
+            addLog('❌ Cannot generate cluster plan. Please load your published posts from WordPress first.');
+            return;
+        }
+        dispatch({ type: 'CLEAR_LOGS' });
+        dispatch({ type: 'START_PLAN_GENERATION' });
+        addLog(`🧠 Strategizing topical cluster for "${clusterTopic}"...`);
+        try {
+            const apiKey = apiKeys[aiProvider];
+            if (!apiKey) throw new Error(`${aiProvider} API Key is required.`);
+            
+            const existingPostTitles = state.wpPosts.map(p => p.title.rendered).join('\n');
+
+            const prompt = `You are a world-class SEO content strategist with deep expertise in establishing topical authority and avoiding keyword cannibalization. Your judgment is paramount.
+
+Your task is to analyze a core topic AND a list of existing blog post titles from a website. Based on this, you will generate a strategic topical cluster plan.
+
+### CORE OBJECTIVES:
+1.  **Achieve Topical Authority**: The plan must be comprehensive, covering the core topic from a main "pillar" article and multiple specific "cluster" articles.
+2.  **Integrate Existing Content**: You MUST leverage the existing articles. Identify which ones fit into the new cluster. This is your highest priority.
+3.  **Prevent Keyword Cannibalization**: DO NOT suggest new article topics that are already well-covered by existing posts. This is a critical failure condition. You must be 1,000,000% certain a new topic is a genuine content gap before suggesting it.
+
+### INSTRUCTIONS:
+1.  **Analyze the Core Topic**: Understand the user intent and semantic space of: "${clusterTopic}".
+2.  **Analyze Existing Articles**: Review the provided list of "Existing Article Titles".
+3.  **Develop the Plan**:
+    *   **Pillar Post**: Define ONE pillar post.
+        *   If a suitable, comprehensive existing article is found, designate it as the pillar. Use its **exact title** from the provided list and mark its status as 'existing'.
+        *   If no existing article is suitable, create a title for a NEW pillar post and mark its status as 'new'.
+    *   **Cluster Posts**: Define 5-7 supporting cluster posts.
+        *   For each supporting sub-topic, first check if an existing article already covers it. If yes, include that article, using its **exact title** from the provided list, and mark its status as 'existing'.
+        *   If a sub-topic is a content gap (i.e., not covered by existing articles), create a title for a NEW cluster post to fill that gap and mark its status as 'new'.
+4.  **JSON Output**: Your response MUST be ONLY a raw JSON object. Do not include any other text, explanations, or markdown.
+
+### REQUIRED JSON OUTPUT FORMAT:
+The JSON object must have two keys: "pillar" and "clusters".
+-   \`pillar\`: An object with two keys:
+    -   \`title\`: (String) The title of the pillar article.
+    -   \`status\`: (String) Either "new" or "existing".
+-   \`clusters\`: An array of objects, where each object has:
+    -   \`title\`: (String) The title of the cluster article.
+    -   \`status\`: (String) Either "new" or "existing".
+
+### DATA FOR ANALYSIS:
+
+**Core Topic:**
+"${clusterTopic}"
+
+**Existing Article Titles:**
+---
+${existingPostTitles}
+---`;
+
+            let responseText = '';
+            if (aiProvider === 'gemini') {
+                 const ai = new GoogleGenAI({ apiKey });
+                 const postStatusType = {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        status: { type: Type.STRING, enum: ['new', 'existing'] },
+                    },
+                    required: ['title', 'status']
+                 };
+                 const responseSchema = {
+                    type: Type.OBJECT,
+                    properties: {
+                        pillar: postStatusType,
+                        clusters: { type: Type.ARRAY, items: postStatusType },
+                    },
+                    required: ['pillar', 'clusters'],
+                 };
+                 const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json', responseSchema } });
+                 responseText = response.text;
+            } else {
+                 const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
+                 if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
+                 const openai = new OpenAI(clientOptions);
+                 const model = aiProvider === 'openai' ? 'gpt-4o' : (openRouterModel || 'openai/gpt-4o');
+                 const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } });
+                 responseText = response.choices[0].message.content;
+            }
+
+            const planFromAI = JSON.parse(cleanAiResponse(responseText));
+            if (!planFromAI.pillar || !Array.isArray(planFromAI.clusters)) {
+                throw new Error("AI returned an invalid plan structure.");
+            }
+
+            // Post-process to add URLs to existing posts
+            const titleToLinkMap = new Map(state.wpPosts.map(p => [p.title.rendered, p.link]));
+            const finalPlan = {
+                pillar: {
+                    ...planFromAI.pillar,
+                    url: planFromAI.pillar.status === 'existing' ? titleToLinkMap.get(planFromAI.pillar.title) : undefined
+                },
+                clusters: planFromAI.clusters.map(cluster => ({
+                    ...cluster,
+                    url: cluster.status === 'existing' ? titleToLinkMap.get(cluster.title) : undefined
+                }))
+            };
+
+            dispatch({ type: 'SET_CLUSTER_PLAN', payload: finalPlan });
+            addLog(`✅ Cluster plan generated for "${clusterTopic}".`);
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            addLog(`❌ Error generating cluster plan: ${errorMessage}`);
+        } finally {
+            dispatch({ type: 'FINISH_PLAN_GENERATION' });
+        }
+    }, [aiProvider, apiKeys, openRouterModel, clusterTopic, addLog, state.wpPosts]);
+    
+    const handleGenerateClusterArticles = useCallback(async () => {
+        if (!clusterPlan) return;
+        
+        const newArticlesToGenerate = [clusterPlan.pillar, ...clusterPlan.clusters].filter(p => p.status === 'new');
+        if (newArticlesToGenerate.length === 0) {
+            addLog('ℹ️ No new articles to generate in this cluster plan.');
+            return;
+        }
+
+        const allTitles = newArticlesToGenerate.map(p => p.title);
+        const jobs = allTitles.map(title => ({ id: Date.now() + Math.random(), title, status: 'queued', result: null }));
+        
+        dispatch({ type: 'START_BATCH_GENERATION', payload: jobs });
+        
+        const generateSingleClusteredPost = async (job) => {
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: 'processing' }});
+            addLog(`🤖 Generating cluster article: "${job.title}"`);
+            const result = await generatePostLogic(job.title, false, { plan: clusterPlan, currentTitle: job.title });
+            const { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = result;
+            return {
+                finalTitle: title,
+                finalContent: content,
+                slug, metaDescription, tags, categories,
+                featuredImage: { prompt: featuredImagePrompt, base64: '' },
+                infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '' })),
+            };
+        };
+
+        const onProgress = ({ item: job, result, success, error }: { item: typeof jobs[0], result?: Awaited<ReturnType<typeof generateSingleClusteredPost>>, error?: Error, index: number, success: boolean }) => {
+            const finalResult = success ? result : error?.message || 'An unknown error occurred.';
+            addLog(success ? `✅ Finished cluster article: "${job.title}"` : `❌ Failed cluster article: "${job.title}" - ${finalResult}`);
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: success ? 'done' : 'error', result: finalResult } });
+        };
+        
+        await processConcurrentPromiseQueue(jobs, generateSingleClusteredPost, onProgress, 3);
+
+        addLog(`🎉 Cluster generation complete.`);
+        dispatch({ type: 'FINISH_BATCH_GENERATION' });
+
+    }, [clusterPlan, generatePostLogic, addLog]);
+
     const handleLoadBatchResultForReview = useCallback((result) => {
         dispatch({ type: 'LOAD_BATCH_RESULT_FOR_REVIEW', payload: result });
         addLog('📝 Loaded batch result. Generating images...');
@@ -2171,12 +2545,188 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
         }
     }, [wpUrl, wpUser, wpPassword, finalTitle, slug, metaDescription, finalContent, tags, categories, featuredImage, infographics, state.duplicateInfo, state.postToUpdate, addLog]);
 
+     // New and modified handlers for cluster features
+    const fetchWpContent = useCallback(async (postId) => {
+        const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts/${postId}?_fields=content`;
+        const credentials = btoa(`${wpUser}:${wpPassword}`);
+        const headers = { 'Authorization': `Basic ${credentials}` };
+        const response = await fetch(apiUrl, { headers });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to fetch content for post ID ${postId}: ${errorData.message || 'Unknown error'}`);
+        }
+        const postData = await response.json();
+        return postData.content.rendered;
+    }, [wpUrl, wpUser, wpPassword]);
+    
+    const handleOptimizeClusterPost = useCallback(async (postTitle) => {
+        const post = state.wpPosts.find(p => p.title.rendered === postTitle);
+        if (!post) {
+            addLog(`❌ Could not find post "${postTitle}" to optimize.`);
+            return;
+        }
+
+        dispatch({ type: 'CLEAR_LOGS' });
+        dispatch({ type: 'UPDATE_FIELD', payload: { field: 'postToUpdate', value: post.id } });
+        addLog(`🚀 Preparing to optimize post: "${post.title.rendered}"`);
+        
+        try {
+            const content = await fetchWpContent(post.id);
+            await handleGenerateContent(content);
+        } catch (error) {
+            addLog(`❌ Error preparing optimization: ${error.message}`);
+            dispatch({ type: 'SET_LOADING_STATE', payload: { content: false } });
+            dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+        }
+    }, [state.wpPosts, fetchWpContent, handleGenerateContent, addLog]);
+
+    const handleProcessFullCluster = useCallback(async () => {
+        if (!clusterPlan) return;
+        
+        const allPostsInPlan = [clusterPlan.pillar, ...clusterPlan.clusters];
+        const jobs = allPostsInPlan.map(p => ({
+            id: Date.now() + Math.random(),
+            title: p.title,
+            status: p.status, // 'new' or 'existing'
+            result: null
+        }));
+
+        dispatch({ type: 'START_BATCH_GENERATION', payload: jobs });
+        
+        const processClusterJob = async (job) => {
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: 'processing' }});
+            addLog(`⚙️ Processing cluster job: "${job.title}"`);
+            
+            const clusterContext = { plan: clusterPlan, currentTitle: job.title };
+            let contentToProcess = job.title;
+            let isUpdate = false;
+
+            if (job.status === 'existing') {
+                const post = state.wpPosts.find(p => p.title.rendered === job.title);
+                if (!post) throw new Error(`Could not find existing post: ${job.title}`);
+                contentToProcess = await fetchWpContent(post.id);
+                isUpdate = true;
+            }
+
+            const result = await generatePostLogic(contentToProcess, isUpdate, clusterContext);
+            const { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = result;
+            
+            return {
+                finalTitle: title,
+                finalContent: content,
+                slug, metaDescription, tags, categories,
+                featuredImage: { prompt: featuredImagePrompt, base64: '' },
+                infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '' })),
+            };
+        };
+
+        const onProgress = ({ item: job, result, success, error }: { item: any, result?: any, error?: Error, success: boolean }) => {
+            const finalResult = success ? result : error?.message || 'An unknown error occurred.';
+            addLog(success ? `✅ Finished cluster article: "${job.title}"` : `❌ Failed cluster article: "${job.title}" - ${finalResult}`);
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: success ? 'done' : 'error', result: finalResult } });
+        };
+        
+        await processConcurrentPromiseQueue(jobs, processClusterJob, onProgress, 3);
+        addLog(`🎉 Full cluster processing complete.`);
+        dispatch({ type: 'FINISH_BATCH_GENERATION' });
+    }, [clusterPlan, state.wpPosts, fetchWpContent, generatePostLogic, addLog]);
+
+    const handleDiscoverClusters = useCallback(async () => {
+        if (state.wpPosts.length === 0) {
+            addLog('❌ Cannot discover clusters without posts. Please load them first.');
+            return;
+        }
+        dispatch({ type: 'CLEAR_LOGS' });
+        dispatch({ type: 'START_DISCOVER_CLUSTERS' });
+        addLog('🤖 Analyzing your content library for cluster opportunities...');
+
+        try {
+            const apiKey = apiKeys[aiProvider];
+            if (!apiKey) throw new Error(`${aiProvider} API key is required.`);
+            const allPostTitles = state.wpPosts.map(p => p.title.rendered);
+            
+            const prompt = `You are a world-class SEO content strategist. Your task is to analyze a list of blog post titles and identify the top 4 most impactful topical cluster opportunities.
+
+### INSTRUCTIONS:
+1.  **Analyze Holistically**: Review the entire list of titles to understand the website's main areas of expertise and identify thematic groupings.
+2.  **Identify High-Potential Clusters**: A good cluster has a strong, broad "pillar" topic and can be supported by multiple specific "cluster" posts. Look for groups of related articles that could be formalized into a powerful cluster to boost authority.
+3.  **Define the Cluster Topic**: For each of the top 4 opportunities, define a clear and concise core topic (e.g., "Content Marketing for Startups").
+4.  **Provide a Rationale**: Briefly explain *why* this is a strong cluster opportunity for this specific website. Mention how it connects existing content and where the potential for new content lies.
+5.  **List Supporting Posts**: Identify 3-5 existing article titles from the provided list that would directly support this cluster topic. This is crucial for grounding your suggestion in the site's current reality.
+6.  **JSON Output**: Your response MUST be ONLY a raw JSON object with a root key "opportunities". Do not include any other text, explanations, or markdown.
+
+### REQUIRED JSON OUTPUT FORMAT:
+{
+  "opportunities": [
+    {
+      "topic": "The core topic for the cluster",
+      "rationale": "A 2-3 sentence explanation of why this is a strategic cluster.",
+      "supportingPosts": [
+        "Exact title of an existing post that fits here",
+        "Another exact title of a supporting post"
+      ]
+    }
+  ]
+}
+
+### EXISTING ARTICLE TITLES FOR ANALYSIS:
+---
+${allPostTitles.join('\n')}
+---
+`;
+            let responseText = '';
+            if (aiProvider === 'gemini') {
+                const ai = new GoogleGenAI({ apiKey });
+                const responseSchema = {
+                    type: Type.OBJECT,
+                    properties: {
+                        opportunities: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    topic: { type: Type.STRING },
+                                    rationale: { type: Type.STRING },
+                                    supportingPosts: { type: Type.ARRAY, items: { type: Type.STRING } }
+                                },
+                                required: ['topic', 'rationale', 'supportingPosts']
+                            }
+                        }
+                    },
+                    required: ['opportunities']
+                };
+                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json', responseSchema } });
+                responseText = response.text;
+            } else { // Fallback for OpenAI/OpenRouter
+                const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
+                if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
+                const openai = new OpenAI(clientOptions);
+                const model = aiProvider === 'openai' ? 'gpt-4o' : (openRouterModel || 'openai/gpt-4o');
+                const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } });
+                responseText = response.choices[0].message.content;
+            }
+
+            const parsed = JSON.parse(cleanAiResponse(responseText));
+            if (!parsed.opportunities || !Array.isArray(parsed.opportunities)) {
+                throw new Error("AI returned data in an unexpected format.");
+            }
+            dispatch({ type: 'SET_SUGGESTED_CLUSTERS', payload: parsed.opportunities });
+            addLog(`✅ Successfully identified ${parsed.opportunities.length} potential clusters.`);
+
+        } catch (error) {
+            addLog(`❌ Error discovering clusters: ${error.message}`);
+        } finally {
+            dispatch({ type: 'FINISH_DISCOVER_CLUSTERS' });
+        }
+    }, [aiProvider, apiKeys, openRouterModel, state.wpPosts, addLog]);
+
+
     const renderStep = () => {
         switch (state.step) {
             case 1:
                 return <ConfigStep state={state} dispatch={dispatch} onFetchSitemap={handleFetchSitemap} onValidateKey={handleKeyValidation} onVerifyWpConnection={handleVerifyWpConnection} />;
             case 2:
-                return <ContentStep state={state} dispatch={dispatch} onGenerateContent={handleGenerateContent} onFetchWpPosts={handleFetchWpPosts} onAnalyzeAndSelect={handleAnalyzeAndSelect} onGeneratePostIdeas={handleGeneratePostIdeas} onGenerateBatch={handleGenerateBatch} onLoadBatchResultForReview={handleLoadBatchResultForReview} />;
+                return <ContentStep state={state} dispatch={dispatch} onGenerateContent={handleGenerateContent} onFetchWpPosts={handleFetchWpPosts} onAnalyzeAndSelect={handleAnalyzeAndSelect} onGeneratePostIdeas={handleGeneratePostIdeas} onGenerateBatch={handleGenerateBatch} onLoadBatchResultForReview={handleLoadBatchResultForReview} onGenerateClusterPlan={handleGenerateClusterPlan} onGenerateClusterArticles={handleGenerateClusterArticles} onProcessFullCluster={handleProcessFullCluster} onDiscoverClusters={handleDiscoverClusters} onOptimizeClusterPost={handleOptimizeClusterPost} />;
             case 3:
                 return <ReviewPublishStep state={state} dispatch={dispatch} onPostAction={handlePublishOrUpdate} onImageRegen={handleImageRegen} />;
             default:
