@@ -66,24 +66,74 @@ const SITE_PROMOTION_URLS = [
     "https://affiliatemarketingforsuccess.com/blog/", "https://affiliatemarketingforsuccess.com/seo/write-meta-descriptions-that-convert/", "https://affiliatemarketingforsuccess.com/blogging/winning-content-strategy/", "https://affiliatemarketingforsuccess.com/review/copy-ai-review/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-choose-a-web-host/", "https://affiliatemarketingforsuccess.com/ai/detect-ai-writing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/warriorplus-affiliate-program-unlock-lucrative-opportunities/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/understanding-what-is-pay-per-call-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/how-chatbot-can-make-you-money/", "https://affiliatemarketingforsuccess.com/info/influencer-marketing-sales/", "https://affiliatemarketingforsuccess.com/ai/the-power-of-large-language-models/", "https://affiliatemarketingforsuccess.com/how-to-start/10-simple-steps-to-build-your-website-a-beginners-guide/", "https://affiliatemarketingforsuccess.com/blogging/sustainable-content/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-discounts-on-black-friday/", "https://affiliatemarketingforsuccess.com/seo/website-architecture-that-drives-conversions/", "https://affiliatemarketingforsuccess.com/blogging/how-to-create-evergreen-content/", "https://affiliatemarketingforsuccess.com/email-marketing/email-marketing-benefits/", "https://affiliatemarketingforsuccess.com/blogging/promote-your-blog-to-increase-traffic/", "https://affiliatemarketingforsuccess.com/ai/discover-the-power-of-chatgpt/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-with-personalized-recommendations/", "https://affiliatemarketingforsuccess.com/seo/benefits-of-an-effective-seo-strategy/", "https://affiliatemarketingforsuccess.com/ai/what-is-ai-prompt-engineering/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/successful-in-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/join-the-best-affiliate-networks/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/beginners-guide-to-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/high-ticket-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/enhance-your-affiliate-marketing-content/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-do-affiliate-marketing-on-shopify/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/discover-why-affiliate-marketing-is-the-best-business-model/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-affiliate-marketing-helps-you-to-become-an-influencer/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-affiliate-marketing-on-blog/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-networks/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-create-a-landing-page-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/review/scalenut-review/", "https://affiliatemarketingforsuccess.com/seo/how-to-improve-your-content-marketing-strategy-in-2025/", "https://affiliatemarketingforsuccess.com/ai/startup-success-with-chatgpt/", "https://affiliatemarketingforsuccess.com/blogging/market-your-blog-the-right-way/", "https://affiliatemarketingforsuccess.com/ai/surfer-seo-alternatives/", "https://affiliatemarketingforsuccess.com/ai/avoid-ai-detection/", "https://affiliatemarketingforsuccess.com/seo/optimize-your-off-page-seo-strategy/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-alternative/", "https://affiliatemarketingforsuccess.com/seo/build-an-effective-seo-strategy/", "https://affiliatemarketingforsuccess.com/email-marketing/understanding-email-marketing/", "https://affiliatemarketingforsuccess.com/ai/write-handwritten-assignments/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-secrets/", "https://affiliatemarketingforsuccess.com/seo/boost-your-organic-ranking/", "https://affiliatemarketingforsuccess.com/seo/how-to-use-google-my-business-to-improve-your-blogs-local-seo/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-tips-for-beginners/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-occupation-prompts/", "https://affiliatemarketingforsuccess.com/ai/perplexity-copilot/", "https://affiliatemarketingforsuccess.com/ai/agility-writer-vs-autoblogging-ai/", "https://affiliatemarketingforsuccess.com/ai/split-testing-perplexity-pages-affiliate-sales/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai-affiliate-funnels-automation/", "https://affiliatemarketingforsuccess.com/ai/ai-content-detectors-reliability/", "https://affiliatemarketingforsuccess.com/ai/google-bard-bypass-detection/", "https://affiliatemarketingforsuccess.com/ai/teachers-detect-gpt-4/", "https://affiliatemarketingforsuccess.com/ai/how-to-write-with-perplexity-ai/", "https://affiliatemarketingforsuccess.com/ai/turnitin-ai-detection-accuracy/", "https://affiliatemarketingforsuccess.com/ai/undetectable-ai-alternatives/", "https://affiliatemarketingforsuccess.com/ai/perplexity-jailbreak-prompts-2/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/earn-generous-commissions-with-walmart-affiliate-program/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-increase-your-affiliate-marketing-conversion-rate/", "https://affiliatemarketingforsuccess.com/ai/how-chat-gpt-will-change-education/", "https://affiliatemarketingforsuccess.com/email-marketing/getresponse-review-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-create-an-affiliate-marketing-strategy/", "https://affiliatemarketingforsuccess.com/ai/perplexity-model/", "https://affiliatemarketingforsuccess.com/email-marketing/proven-ways-to-grow-your-email-list/", "https://affiliatemarketingforsuccess.com/ai/undetectable-ai/", "https://affiliatemarketingforsuccess.com/review/use-fiverr-gigs-to-boost-your-business/", "https://affiliatemarketingforsuccess.com/seo/google-ranking-factors/", "https://affiliatemarketingforsuccess.com/ai/how-chat-gpt-is-different-from-google/", "https://affiliatemarketingforsuccess.com/blogging/a-guide-to-copyediting-vs-copywriting/", "https://affiliatemarketingforsuccess.com/email-marketing/craft-irresistible-email-newsletters/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-on-instagram/", "https://affiliatemarketingforsuccess.com/ai/integrate-perplexity-ai-affiliate-tech-stack/", "https://affiliatemarketingforsuccess.com/ai/affiliate-marketing-perplexity-ai-future/", "https://affiliatemarketingforsuccess.com/blogging/increase-domain-authority-quickly/", "https://affiliatemarketingforsuccess.com/review/wp-rocket-boost-wordpress-performance/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/shein-affiliate-program-usa-fashionable-earnings-await-you/", "https://affiliatemarketingforsuccess.com/ai/auto-ai-transforming-industries-with-automation/", "https://affiliatemarketingforsuccess.com/ai/is-turnitin-free/", "https://affiliatemarketingforsuccess.com/review/getresponse-vs-clickfunnels/", "https://affiliatemarketingforsuccess.com/ai/autoblogging-ai-review/", "https://affiliatemarketingforsuccess.com/tools/affiliate-link-generator/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-creative-writing-prompts/", "https://affiliatemarketingforsuccess.com/ai/undetectable-ai-review/", "https://affiliatemarketingforsuccess.com/ai/best-ai-detector/", "https://affiliatemarketingforsuccess.com/ai/ai-future-of-seo/", "https://affiliatemarketingforsuccess.com/review/clickfunnels-review/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-plagiarize/", "https://affiliatemarketingforsuccess.com/ai/turnitin-detect-quillbot-paraphrasing/", "https://affiliatemarketingforsuccess.com/ai/use-turnitin-checker/", "https://affiliatemarketingforsuccess.com/ai/turnitin-read-images/", "https://affiliatemarketingforsuccess.com/ai/turnitin-ai-detection-free/", "https://affiliatemarketingforsuccess.com/ai/jobs-in-danger-due-to-gpt-4/", "https://affiliatemarketingforsuccess.com/ai/surfer-ai-review/", "https://affiliatemarketingforsuccess.com/tools/content-idea-generator/", "https://affiliatemarketingforsuccess.com/review/getresponse-vs-mailchimp/", "https://affiliatemarketingforsuccess.com/ai/turnitin-plagiarism/", "https://affiliatemarketingforsuccess.com/email-marketing/getresponse-vs-tinyemail/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/struggling-with-wordpress/", "https://affiliatemarketingforsuccess.com/ai/learn-prompt-engineering/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-promote-affiliate-products-without-a-website/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-playground/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-api/", "https://affiliatemarketingforsuccess.com/review/frase-review-2025/", "https://affiliatemarketingforsuccess.com/review/seowriting-ai-review/", "https://affiliatemarketingforsuccess.com/tools/seo-keyword-research-tool/", "https://affiliatemarketingforsuccess.com/tools/affiliate-program-comparison-tool/", "https://affiliatemarketingforsuccess.com/review/writesonic-review/", "https://affiliatemarketingforsuccess.com/blogging/content-marketing-must-educate-and-convert-the-customer/", "https://affiliatemarketingforsuccess.com/blogging/how-to-successfully-transition-into-copywriting/", "https://affiliatemarketingforsuccess.com/blogging/how-to-use-new-methods-to-capture-leads/", "https://affiliatemarketingforsuccess.com/blogging/update-old-blog-content/", "https://affiliatemarketingforsuccess.com/review/frase-io-vs-quillbot/", "https://affiliatemarketingforsuccess.com/blogging/testimonials-as-blog-content-in-2024/", "https://affiliatemarketingforsuccess.com/blogging/overcoming-blog-stagnation/", "https://affiliatemarketingforsuccess.com/seo/web-positioning-in-google/", "https://affiliatemarketingforsuccess.com/blogging/the-blogging-lifestyle/", "https://affiliatemarketingforsuccess.com/review/bramework-review/", "https://affiliatemarketingforsuccess.com/seo/how-will-voice-search-impact-your-seo-strategy/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-succeed-in-email-marketing/", "https://affiliatemarketingforsuccess.com/review/spreadsimple-review/", "https://affiliatemarketingforsuccess.com/ai/boost-affiliate-earnings-perplexity-ai/", "https://affiliatemarketingforsuccess.com/tools/script-timer-tool/", "https://affiliatemarketingforsuccess.com/ai/agility-writer-review/", "https://affiliatemarketingforsuccess.com/review/inkforall-review-2024/", "https://affiliatemarketingforsuccess.com/web-hosting/web-hosting-comparison/", "https://affiliatemarketingforsuccess.com/ai/is-chatgpt-down-what-happened-and-how-to-fix-it/", "https://affiliatemarketingforsuccess.com/review/namehero-hosting-review/", "https://affiliatemarketingforsuccess.com/review/katteb-review/", "https://affiliatemarketingforsuccess.com/blogging/wordpress-blogging-tips/", "https://affiliatemarketingforsuccess.com/review/neuronwriter-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-quickly-can-i-make-money-with-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/step-by-step-in-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-costs-to-start-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/blogging/grow-your-affiliate-marketing-blog/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-niche-selection-mistakes/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-reviews/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-tools/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/digital-marketing-definition/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/build-an-affiliate-marketing-business/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-success/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-ai-affiliate-niches/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-concepts-of-digital-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/building-an-affiliate-marketing-website/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-affiliate-marketing-works/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/maximize-your-startup-potential-leverage-chatgpt-for-startups-with-expert-chatgpt-prompts/", "https://affiliatemarketingforsuccess.com/review/grammarly-premium-review-leveradge-your-writing/", "https://affiliatemarketingforsuccess.com/blogging/how-to-position-your-blog/", "https://affiliatemarketingforsuccess.com/blogging/how-to-quickly-generate-leads/", "https://affiliatemarketingforsuccess.com/blogging/what-is-the-best-structure-of-a-blog-post/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-has-changed-seo-forever/", "https://affiliatemarketingforsuccess.com/blogging/8-tips-for-successful-copywriting/", "https://affiliatemarketingforsuccess.com/blogging/why-do-blogs-fail/", "https://affiliatemarketingforsuccess.com/ai/copywriting-frameworks/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-long-it-takes-to-become-an-affiliate-marketer/", "https://affiliatemarketingforsuccess.com/make-money-online/business-models-to-make-money-online/", "https://affiliatemarketingforsuccess.com/review/blogify-ai-review/", "https://affiliatemarketingforsuccess.com/review/wpx-hosting-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-for-online-business/", "https://affiliatemarketingforsuccess.com/review/kinsta-wordpress-hosting-review/", "https://affiliatemarketingforsuccess.com/review/marketmuse-review/", "https://affiliatemarketingforsuccess.com/blogging/how-to-analyze-your-blogs-user-behavior-metrics/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-examples/", "https://affiliatemarketingforsuccess.com/blogging/how-to-increase-your-online-sales-at-christmas/", "https://affiliatemarketingforsuccess.com/blogging/keys-to-creating-successful-content-on-your-blog/", "https://affiliatemarketingforsuccess.com/review/writesonic-vs-seowriting-ai/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai-revolutionize-affiliate-strategy/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/blogging/create-seo-friendly-blog-posts/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-for-education/", "https://affiliatemarketingforsuccess.com/make-money-online/what-is-the-profile-of-a-successful-online-entrepreneur/", "https://affiliatemarketingforsuccess.com/ai/bard-vs-chatgpt-vs-grok/", "https://affiliatemarketingforsuccess.com/blogging/automate-your-blog-with-artificial-intelligence/", "https://affiliatemarketingforsuccess.com/info/how-to-screenshot-on-chromebook/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-detected-by-safeassign/", "https://affiliatemarketingforsuccess.com/ai/turnitin-vs-grammarly/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/what-are-impressions-in-advertising/", "https://affiliatemarketingforsuccess.com/blogging/11-things-to-outsource-as-a-blogger-for-more-time-and-efficiency/", "https://affiliatemarketingforsuccess.com/email-marketing/email-list-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/review/copy-ai-vs-katteb/", "https://affiliatemarketingforsuccess.com/how-to-start/google-ranking-factors-seo-strategy/", "https://affiliatemarketingforsuccess.com/make-money-online/how-to-make-money-writing-articles-online/", "https://affiliatemarketingforsuccess.com/blogging/best-topics-on-your-digital-marketing-blog/", "https://affiliatemarketingforsuccess.com/web-hosting/digitalocean-review/", "https://affiliatemarketingforsuccess.com/blogging/top-challenges-a-blogger-faces/", "https://affiliatemarketingforsuccess.com/blogging/how-to-boost-the-ranking-of-an-existing-page-on-search-engines/", "https://affiliatemarketingforsuccess.com/blogging/create-your-personal-blog/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-vs-competing-language-models/", "https://affiliatemarketingforsuccess.com/info/paraphrase-text-using-nlp/", "https://affiliatemarketingforsuccess.com/review/pictory-ai-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-track-and-measure-your-affiliate-marketing-performance/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-use-seo-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/seo/mastering-seo-best-practices/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-much-time-it-takes-to-earn-from-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/blogging/google-pagespeed-insights/", "https://affiliatemarketingforsuccess.com/blogging/the-imposter-syndrome/", "https://affiliatemarketingforsuccess.com/blogging/lead-nurturing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-vs-dropshipping/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-make-money-with-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/seo/the-importance-of-seo-for-your-blog/", "https://affiliatemarketingforsuccess.com/how-to-start/criteria-for-profitable-affiliate-niches/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-give-same-answers/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/why-affiliate-marketers-fail/", "https://affiliatemarketingforsuccess.com/ai/winston-detect-quillbot/", "https://affiliatemarketingforsuccess.com/ai/quillbot-bypass-ai-detection/", "https://affiliatemarketingforsuccess.com/ai/how-chatgpt-gets-information/", "https://affiliatemarketingforsuccess.com/email-marketing/effective-email-marketing-strategies/", "https://affiliatemarketingforsuccess.com/ai/semantic-clustering-in-seo/", "https://affiliatemarketingforsuccess.com/ai/semantic-clustering-tools/", "https://affiliatemarketingforsuccess.com/blogging/how-to-write-niche-specific-content/", "https://affiliatemarketingforsuccess.com/make-money-online/optimize-your-sales-funnel/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-affiliate-marketing-niches-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-start-an-affiliate-marketing-blog/", "https://affiliatemarketingforsuccess.com/blogging/how-to-setup-the-basic-seo-technical-foundations-for-your-blog/", "https://affiliatemarketingforsuccess.com/blogging/long-term-content-strategy/", "https://affiliatemarketingforsuccess.com/ai/how-chatgpt-works/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-nlp/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-course/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-ai-art/", "https://affiliatemarketingforsuccess.com/review/semrush-review-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/top-10-affiliate-marketing-trends-in-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/launch-affiliate-business-ai-tools/", "https://affiliatemarketingforsuccess.com/blogging/monetize-your-blog-proven-strategies/", "https://affiliatemarketingforsuccess.com/ai/ethical-implications-of-ai/", "https://affiliatemarketingforsuccess.com/web-hosting/siteground-web-hosting-review-2025/", "https://affiliatemarketingforsuccess.com/ai/deepseek-r1-vs-chatgpt/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-jobs/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai/", "https://affiliatemarketingforsuccess.com/review/the-ultimate-jasper-ai-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-use-social-media-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-use-cases/", "https://affiliatemarketingforsuccess.com/seo/the-importance-of-keywords-research/", "https://affiliatemarketingforsuccess.com/ai/ai-prompt-writing/", "https://affiliatemarketingforsuccess.com/blogging/what-is-copywriting-promotes-advertises-or-entertains/", "https://affiliatemarketingforsuccess.com/blogging/how-to-write-a-high-ranking-blog-post/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/generative-ai/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-register-a-domain-name/", "https://affiliatemarketingforsuccess.com/chatgpt-prompts/chatgpt-prompts-for-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-many-affiliate-programs-should-i-join-guide/", "https://affiliatemarketingforsuccess.com/how-to-start/top-10-pro-tips-for-choosing-affiliate-marketing-programs/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/optimize-your-affiliate-marketing-website-for-seo/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-use-youtube-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/ai-affiliate-marketing-strategies-2025/", "https://affiliatemarketingforsuccess.com/review/quillbot-review/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-choose-your-niche/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-make-money-with-amazon-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/best-chatgpt-alternatives-for-2025/", "https://affiliatemarketingforsuccess.com/how-to-start/most-suitable-affiliate-program/", "https://affiliatemarketingforsuccess.com/seo/seo-writing-a-complete-guide-to-seo-writing/", "https://affiliatemarketingforsuccess.com/how-to-start/the-truth-about-web-hosting/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-prompt-engineering/", "https://affiliatemarketingforsuccess.com/blogging/storytelling-in-content-marketing/", "https://affiliatemarketingforsuccess.com/tools/email-marketing-template-generator/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-mistakes/", "https://affiliatemarketingforsuccess.com/seo/keyword-stemming/", "https://affiliatemarketingforsuccess.com/ai/multimodal-ai-models-guide/", "https://affiliatemarketingforsuccess.com/ai/large-language-models-comparison-2025/", "https://affiliatemarketingforsuccess.com/ai/gpt-4o-vs-gemini/", "https://affiliatemarketingforsuccess.com/ai/multimodal-prompt-engineering/", "https://affiliatemarketingforsuccess.com/ai/claude-4-guide/", "https://affiliatemarketingforsuccess.com/seo/programmatic-seo/", "https://affiliatemarketingforsuccess.com/blogging/blogging-mistakes-marketers-make/", "https://affiliatemarketingforsuccess.com/seo/why-your-current-seo-strategy-is-failing/", "https://affiliatemarketingforsuccess.com/blogging/how-to-brand-storytelling/", "https://affiliatemarketingforsuccess.com/seo/doing-an-seo-audit/", "https://affiliatemarketingforsuccess.com/tools/commission-calculator/", "https://affiliatemarketingforsuccess.com/blogging/essential-tools-for-a-blogger/", "https://affiliatemarketingforsuccess.com/blogging/types-of-evergreen-content/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-strategies/", "https://affiliatemarketingforsuccess.com/review/cloudways-review-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-power-of-ai-in-seo/", "https://affiliatemarketingforsuccess.com/ai/artificial-intelligence-machine-learning-revolutionizing-the-future/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/keys-to-successful-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/seo/improve-your-ranking-in-seo/", "https://affiliatemarketingforsuccess.com/blogging/reduce-bounce-rate/", "https://affiliatemarketingforsuccess.com/blogging/what-is-a-creative-copywriter/", "https://affiliatemarketingforsuccess.com/ai/chatgpt4-vs-gemini-pro-in-blog-writing/", "https://affiliatemarketingforsuccess.com/blogging/build-a-blogging-business-from-scratch/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-ultimate-guide-to-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/email-marketing/convertkit-pricing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-affiliate-products-to-promote/", "https://affiliatemarketingforsuccess.com/make-money-online/how-to-make-money-with-clickbank-the-ultimate-guide/", "https://affiliatemarketingforsuccess.com/seo/link-building-strategies/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-on-pinterest/", "https://affiliatemarketingforsuccess.com/blogging/blog-monetization-strategies/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/why-is-affiliate-marketing-so-hard/", "https://affiliatemarketingforsuccess.com/ai/originality-ai-review/", "https://affiliatemarketingforsuccess.com/ai/how-chatbot-helps-developers/", "https://affiliatemarketingforsuccess.com/info/how-to-make-a-social-media-marketing-plan/", "https://affiliatemarketingforsuccess.com/blogging/countless-benefits-of-blogging/", "https://affiliatemarketingforsuccess.com/ai/the-anthropic-prompt-engineer/", "https://affiliatemarketingforsuccess.com/ai/nvidia-ai/", "https://affiliatemarketingforsuccess.com/chatgpt-prompts/awesome-chatgpt-prompts/", "https://affiliatemarketingforsuccess.com/ai/ai-powered-semantic-clustering/", "https://affiliatemarketingforsuccess.com/ai/semantic-clustering-techniques/", "https://affiliatemarketingforsuccess.com/ai/benefits-of-semantic-clustering/"
 ];
 
+const PageHeader = ({ title, description }) => (
+    <div className="page-header">
+        <h2>{title}</h2>
+        <p>{description}</p>
+    </div>
+);
 
-const ProgressBar = ({ currentStep }: { currentStep: number }) => {
-    const steps = ['Config', 'Content', 'Review & Publish'];
+const Sidebar = ({ currentStep, onNavigate, canNavigate }) => {
+    const navItems = [
+        { id: 1, label: "Configuration", icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.108 1.204.165.397.505.71.93.78l.894.15c.542.09.94.56.94 1.109v1.094c0 .55-.398 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.93.78-.164.398-.142.854.108 1.204l.527.738c.32.447.27.96-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.78.93l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.149-.894a1.125 1.125 0 01-.93-.78c-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-.96.27-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149a1.125 1.125 0 01.93-.78c.398-.164.854-.142 1.204-.108l.738.527c.447.32.96.27 1.45.12l.773-.774a1.125 1.125 0 011.449-.12l.738.527c.35.25.806.272 1.203.107.397-.165.71-.505.78-.93l.15-.894z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
+        { id: 2, label: "Content Hub", icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg> },
+        { id: 3, label: "Review & Publish", icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" /></svg> }
+    ];
+
     return (
-        <ol className="progress-bar">
-            {steps.map((name, index) => {
-                const stepIndex = index + 1;
-                const status = stepIndex < currentStep ? 'completed' : stepIndex === currentStep ? 'active' : '';
-                return (
-                    <li key={name} className={`progress-step ${status}`}>
-                        <div className="step-circle">{stepIndex < currentStep ? '✔' : stepIndex}</div>
-                        {name}
-                    </li>
-                );
-            })}
-        </ol>
+        <aside className="sidebar">
+            <div className="sidebar-header">
+                <div className="logo">🚀</div>
+                <h1>WP Optimizer Pro</h1>
+            </div>
+            <nav className="sidebar-nav">
+                <ul>
+                    {navItems.map(item => (
+                        <li key={item.id}>
+                            <a href="#"
+                               onClick={(e) => { e.preventDefault(); if(canNavigate) onNavigate(item.id); }}
+                               className={`${currentStep === item.id ? 'active' : ''} ${!canNavigate && item.id > 1 ? 'disabled' : ''}`}
+                            >
+                                {item.icon}
+                                {item.label}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+            <div className="sidebar-footer">
+                <p>&copy; {new Date().getFullYear()}<br />
+                <a href="https://affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer">
+                    AffiliateMarketingForSuccess.com
+                </a>
+                </p>
+            </div>
+        </aside>
     );
 };
+
+const BottomNav = ({ currentStep, onNavigate, canNavigate }) => {
+    const navItems = [
+        { id: 1, label: "Config", icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.108 1.204.165.397.505.71.93.78l.894.15c.542.09.94.56.94 1.109v1.094c0 .55-.398 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.93.78-.164.398-.142.854.108 1.204l.527.738c.32.447.27.96-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.78.93l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.149-.894a1.125 1.125 0 01-.93-.78c-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-.96.27-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149a1.125 1.125 0 01.93-.78c.398-.164.854-.142 1.204-.108l.738.527c.447.32.96.27 1.45.12l.773-.774a1.125 1.125 0 011.449-.12l.738.527c.35.25.806.272 1.203.107.397-.165.71-.505.78-.93l.15-.894z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
+        { id: 2, label: "Content", icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg> },
+        { id: 3, label: "Review", icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" /></svg> }
+    ];
+    return (
+        <nav className="bottom-nav">
+            {navItems.map(item => (
+                <a href="#"
+                   key={item.id}
+                   onClick={(e) => { e.preventDefault(); if (canNavigate) onNavigate(item.id); }}
+                   className={`bottom-nav-item ${currentStep === item.id ? 'active' : ''} ${!canNavigate && item.id > 1 ? 'disabled' : ''}`}
+                >
+                    {item.icon}
+                    <span>{item.label}</span>
+                </a>
+            ))}
+        </nav>
+    );
+};
+
 
 const ApiKeyValidator = ({ status }) => {
     if (status === 'validating') {
@@ -138,6 +188,17 @@ const PromotionalArticles = () => {
         </div>
     );
 };
+
+const PromoBanner = () => (
+    <div className="promo-banner">
+        <h3>Dominate Your Niche with an Unfair Advantage</h3>
+        <p><strong>The Sizzle:</strong> We don't just offer tools; we deliver an integrated AI-powered ecosystem that builds lasting Topical Authority, making your content the definitive source in your field.</p>
+        <a href="https://seo-hub.affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer" className="btn">
+            Discover the SEO Hub
+        </a>
+    </div>
+);
+
 
 const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWpConnection }) => {
     const { wpUrl, wpUser, wpPassword, sitemapUrl, urlLimit, loading, aiProvider, apiKeys, openRouterModel, keyStatus, wpConnectionStatus, wpConnectionError, wpUserRoles } = state;
@@ -233,15 +294,32 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
         
         const isLowPermissionRole = wpUserRoles.length > 0 && !wpUserRoles.includes('administrator') && !wpUserRoles.includes('editor');
 
+        const isAuthError = wpConnectionError.includes('You are not currently logged in.');
+
         return (
-            <div className={`connection-status ${wpConnectionStatus}`}>
+            <div className={`result ${wpConnectionStatus === 'error' ? 'error' : 'success'}`} style={{ marginTop: '1.5rem' }}>
                 {wpConnectionStatus === 'verifying' && <p>Verifying connection...</p>}
-                {wpConnectionStatus === 'error' && <p><strong>Connection Failed:</strong> {wpConnectionError}</p>}
+                {wpConnectionStatus === 'error' && (
+                    <>
+                        <p style={{ margin: 0 }}><strong>Connection Failed</strong></p>
+                        {isAuthError ? (
+                            <p className="help-text" style={{color: 'inherit', marginTop: '0.5rem'}}>
+                                This is usually caused by an incorrect Username or Application Password.
+                                Please ensure you are using an <strong>Application Password</strong>, not your regular WordPress login password.
+                                <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" style={{color: 'inherit', fontWeight: 'bold', marginLeft: '4px'}}>
+                                    Learn how to create one here.
+                                </a>
+                            </p>
+                        ) : (
+                            <p className="help-text" style={{color: 'inherit', marginTop: '0.5rem'}}>{wpConnectionError}</p>
+                        )}
+                    </>
+                )}
                 {wpConnectionStatus === 'success' && (
                     <>
-                        <p>✅ <strong>Connection successful.</strong> Role(s): {wpUserRoles.join(', ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                        <p style={{ margin: 0 }}>✅ <strong>Connection successful.</strong> Role(s): {wpUserRoles.join(', ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                         {isLowPermissionRole && (
-                            <p className="role-warning">
+                             <p className="help-text" style={{color: 'inherit', marginTop: '0.5rem'}}>
                                 Your '{wpUserRoles[0]}' role may have limitations (e.g., unable to upload images or edit others' posts). An 'Editor' or 'Administrator' role is recommended for full functionality.
                             </p>
                         )}
@@ -254,6 +332,10 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
 
     return (
         <div className="step-container" id="step-1-config">
+            <PageHeader title="Configuration" description="Connect your WordPress site, configure your AI provider, and set up your sitemap to get started." />
+            
+            <PromoBanner />
+            
             <fieldset className="config-fieldset">
                 <legend>WordPress Configuration</legend>
                 <div className="form-group">
@@ -267,10 +349,10 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
                 <div className="form-group">
                     <label htmlFor="wpPassword">WordPress Application Password</label>
                     <input type="password" id="wpPassword" value={wpPassword} onChange={handleChange} placeholder="xxxx xxxx xxxx xxxx" required />
-                    <p className="help-text">Generate this in your WP admin under Users &gt; Profile &gt; Application Passwords. This password is never stored.</p>
+                    <p className="help-text">Generate this in your WP admin under Users &gt; Profile &gt; Application Passwords. <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer">Learn More</a></p>
                 </div>
                 <div className="form-group">
-                    <button onClick={onVerifyWpConnection} className="btn" style={{backgroundColor: '#4B5563', width: 'auto'}} disabled={loading.wpConnection || !isWpConfigured}>
+                    <button onClick={onVerifyWpConnection} className="btn btn-secondary" style={{width: 'auto'}} disabled={loading.wpConnection || !isWpConfigured}>
                         {loading.wpConnection ? 'Verifying...' : 'Verify Connection'}
                     </button>
                 </div>
@@ -320,16 +402,15 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
                     <input type="number" id="urlLimit" value={urlLimit} onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'urlLimit', value: parseInt(e.target.value, 10) }})} />
                 </div>
             </fieldset>
-            
-            <PromotionalArticles />
 
              <div className="checkbox-group">
                 <input type="checkbox" id="saveConfig" checked={saveConfig} onChange={handleSaveToggle} />
                 <label htmlFor="saveConfig">Save configuration (excluding passwords)</label>
             </div>
-            {saveConfig && <button onClick={handleClearConfig} className="btn" style={{backgroundColor: '#4B5563', marginTop: '1rem', width: 'auto'}}>Clear Saved Config</button>}
-            <div className="button-group" style={{marginTop: '1.5rem'}}>
-                <button onClick={() => onFetchSitemap(false)} className="btn" style={{backgroundColor: '#4B5563'}} disabled={loading.sitemap || !isApiKeyValid || wpConnectionStatus !== 'success'}>
+            {saveConfig && <button onClick={handleClearConfig} className="btn btn-secondary" style={{ marginTop: '1rem', width: 'auto'}}>Clear Saved Config</button>}
+            
+            <div className="button-group" style={{marginTop: '2rem'}}>
+                <button onClick={() => onFetchSitemap(false)} className="btn btn-secondary" disabled={loading.sitemap || !isApiKeyValid || wpConnectionStatus !== 'success'}>
                     Proceed without Sitemap
                 </button>
                 <button onClick={() => onFetchSitemap(true)} className="btn" disabled={loading.sitemap || !isSitemapConfigValid || !isApiKeyValid || wpConnectionStatus !== 'success'}>
@@ -365,6 +446,11 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
         dispatch({ type: 'CLEAR_CLUSTER_PLAN' });
         setActiveView('new');
+        
+        const workspace = document.getElementById('workspace-container');
+        if(workspace) {
+            workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     };
     
     const handleCreateBatchClick = () => {
@@ -479,7 +565,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     );
     
     const renderNewPostView = () => (
-         <>
+         <div className="create-new-form">
+            <h3>Create New Post</h3>
             <div className="post-ideas-generator">
                 <h4>Need inspiration?</h4>
                 <p className="help-text">Generate AI-powered blog post ideas based on your site's content to fill gaps and boost topical authority.</p>
@@ -492,7 +579,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                     {loading.ideas ? 'Generating Ideas...' : '✨ Generate 5 Post Ideas'}
                 </button>
                  {fetchedUrls.length === 0 && (
-                    <p className="help-text" style={{color: 'var(--warning-text-color)'}}>
+                    <p className="help-text" style={{color: 'var(--warning-color)'}}>
                         Fetch your sitemap in Step 1 to enable this feature.
                     </p>
                 )}
@@ -519,16 +606,16 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 <textarea id="rawContent" value={rawContent} onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'rawContent', value: e.target.value}})} placeholder="Paste your raw, unformatted text here, or generate ideas above and select one to start." required></textarea>
             </div>
              <div className="button-group">
-                <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Config</button>
+                <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn btn-secondary">Back to Config</button>
                 <button onClick={() => onGenerateContent()} className="btn" disabled={loading.content || !rawContent}>
                     {loading.content ? 'Generating...' : 'Optimize New Content'}
                 </button>
             </div>
-        </>
+        </div>
     );
 
     const renderEditPostView = () => (
-        <>
+        <div className="create-new-form">
             <div className="edit-post-header">
                 <h4>Editing: <span>{wpPosts.find(p => p.id === postToUpdate)?.title.rendered || '...'}</span></h4>
             </div>
@@ -544,26 +631,26 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 ></textarea>
             </div>
              <div className="button-group">
-                <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Config</button>
+                <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn btn-secondary">Back to Config</button>
                 <button onClick={() => onGenerateContent()} className="btn" disabled={loading.content || !rawContent}>
                     {loading.content ? 'Generating...' : 'Optimize Existing Content'}
                 </button>
             </div>
-        </>
+        </div>
     );
 
     const renderPostList = () => (
         <div className="post-list-section">
             <div className="post-list-header">
                 <div className="post-list-header-main">
-                    <h2>Update Existing Content</h2>
+                    <h3>Update Existing Content</h3>
                     <p>Select a post from the list below to analyze, edit, and optimize it.</p>
                 </div>
                 <div className="post-list-actions">
-                    <button onClick={handleCreateNewClick} className="btn">+ Create New Post</button>
-                    <button onClick={handleCreateBatchClick} className="btn btn-secondary">🚀 Batch Create</button>
-                    <button onClick={handleClusterClick} className="btn btn-secondary">🌐 Topical Cluster</button>
-                    <button onClick={handleDiscoverClick} className="btn btn-secondary">🔍 Discover Clusters</button>
+                    <button onClick={handleCreateNewClick} className="btn">+ Create New</button>
+                    <button onClick={handleCreateBatchClick} className="btn btn-secondary">🚀 Batch</button>
+                    <button onClick={handleClusterClick} className="btn btn-secondary">🌐 Cluster</button>
+                    <button onClick={handleDiscoverClick} className="btn btn-secondary">🔍 Discover</button>
                 </div>
             </div>
 
@@ -594,33 +681,34 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
             </div>
 
             <div className="posts-list-container">
+                {/* Desktop Table View */}
                 <table className="posts-table">
                     <thead>
                         <tr>
-                            <th onClick={() => requestSort('status')} className={sortConfig.key === 'status' ? 'active' : ''}>Status<span className="sort-indicator">{getSortIndicator('status')}</span></th>
-                            <th onClick={() => requestSort('title')} className={sortConfig.key === 'title' ? 'active' : ''}>Post Title<span className="sort-indicator">{getSortIndicator('title')}</span></th>
-                            <th onClick={() => requestSort('keyword')} className={sortConfig.key === 'keyword' ? 'active' : ''}>Keyword<span className="sort-indicator">{getSortIndicator('keyword')}</span></th>
-                            <th onClick={() => requestSort('wordCount')} className={sortConfig.key === 'wordCount' ? 'active' : ''}>Words<span className="sort-indicator">{getSortIndicator('wordCount')}</span></th>
-                            <th onClick={() => requestSort('date')} className={sortConfig.key === 'date' ? 'active' : ''}>Published<span className="sort-indicator">{getSortIndicator('date')}</span></th>
-                            <th onClick={() => requestSort('modified')} className={sortConfig.key === 'modified' ? 'active' : ''}>Modified<span className="sort-indicator">{getSortIndicator('modified')}</span></th>
+                            <th onClick={() => requestSort('status')}>Status<span className="sort-indicator">{getSortIndicator('status')}</span></th>
+                            <th onClick={() => requestSort('title')}>Post Title<span className="sort-indicator">{getSortIndicator('title')}</span></th>
+                            <th onClick={() => requestSort('keyword')}>Keyword<span className="sort-indicator">{getSortIndicator('keyword')}</span></th>
+                            <th onClick={() => requestSort('wordCount')}>Words<span className="sort-indicator">{getSortIndicator('wordCount')}</span></th>
+                            <th onClick={() => requestSort('date')}>Published<span className="sort-indicator">{getSortIndicator('date')}</span></th>
+                            <th onClick={() => requestSort('modified')}>Modified<span className="sort-indicator">{getSortIndicator('modified')}</span></th>
                             <th className="actions-cell">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {sortedAndFilteredPosts.map(post => {
                             const status = getPostStatus(post);
-                            const classNames = [ 'post-row-clickable', post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
+                            const classNames = [ post.id === postToUpdate ? 'selected' : '', !post.canEdit ? 'cannot-edit' : '', post.updatedInSession ? 'updated-in-session' : '' ].filter(Boolean).join(' ');
                             return (
                                 <tr key={post.id} className={classNames} onClick={() => handlePostRowClick(post)}>
-                                    <td data-label="Status"><span className={`status-pill ${status.className}`}>{status.text}</span></td>
-                                    <td data-label="Title" className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
-                                    <td data-label="Keyword" className="keyword-cell" title={post.keyword}>
+                                    <td><span className={`status-pill ${status.className}`}>{status.text}</span></td>
+                                    <td className="title-cell" title={post.title.rendered}>{post.title.rendered}</td>
+                                    <td className="keyword-cell" title={post.keyword}>
                                         {post.status === 'loading' ? <div className="keyword-loading-spinner"></div> : (post.keyword || '–')}
                                     </td>
-                                    <td data-label="Words">{post.wordCount ?? '–'}</td>
-                                    <td data-label="Published">{new Date(post.date).toLocaleDateString()}</td>
-                                    <td data-label="Modified">{new Date(post.modified).toLocaleDateString()}</td>
-                                    <td data-label="Actions" className="actions-cell">
+                                    <td>{post.wordCount ?? '–'}</td>
+                                    <td>{new Date(post.date).toLocaleDateString()}</td>
+                                    <td>{new Date(post.modified).toLocaleDateString()}</td>
+                                    <td className="actions-cell">
                                         <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn-icon" title="View Live Post" onClick={e => e.stopPropagation()}>
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                         </a>
@@ -633,6 +721,38 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                         })}
                     </tbody>
                 </table>
+                 {/* Mobile Card View */}
+                <div className="posts-card-view">
+                    {sortedAndFilteredPosts.map(post => {
+                        const status = getPostStatus(post);
+                        const classNames = ['post-card', post.id === postToUpdate ? 'selected' : ''].filter(Boolean).join(' ');
+                         return (
+                            <div key={post.id} className={classNames} onClick={() => handlePostRowClick(post)}>
+                                <div className="post-card-header">
+                                    <h4 className="post-card-title">{post.title.rendered}</h4>
+                                    <span className={`status-pill ${status.className}`}>{status.text}</span>
+                                </div>
+                                <div className="post-card-body">
+                                    <div className="post-card-info">
+                                        <span><strong>Keyword:</strong> {post.status === 'loading' ? '...' : (post.keyword || '–')}</span>
+                                        <span><strong>Words:</strong> {post.wordCount ?? '–'}</span>
+                                    </div>
+                                    <div className="post-card-info">
+                                         <span><strong>Modified:</strong> {new Date(post.modified).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                                <div className="post-card-footer">
+                                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="btn-icon" title="View Live Post" onClick={e => e.stopPropagation()}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    </a>
+                                    <button className="btn-icon" title="Analyze & Edit Post" disabled={!post.canEdit || post.status === 'loading'} onClick={e => {e.stopPropagation(); handlePostRowClick(post);}}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
@@ -645,8 +765,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         const topicsCount = batchTopics.split('\n').filter(t => t.trim()).length;
         
         return (
-            <div className="batch-create-container">
-                <h4>Batch Post Generation</h4>
+            <div className="create-new-form">
+                <h3>Batch Post Generation</h3>
                 <p className="help-text">Enter one blog post title or topic per line. The AI will generate a full article for each.</p>
                 <div className="form-group">
                     <textarea 
@@ -692,8 +812,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     };
 
     const renderClusterView = () => (
-        <div className="cluster-view-container">
-            <h4>Build a Topical Cluster</h4>
+        <div className="create-new-form">
+            <h3>Build a Topical Cluster</h3>
             <p className="help-text">Enter a core topic to build your website's authority. The AI will analyze your existing posts to create a strategic plan, suggesting new articles and identifying existing ones to update, avoiding keyword cannibalization.</p>
              {wpPosts.length === 0 && (
                 <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
@@ -744,8 +864,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
 
 
         return (
-            <div className="cluster-plan-view">
-                <h4>Review Your Topical Cluster Plan</h4>
+            <div className="create-new-form">
+                <h3>Review Your Topical Cluster Plan</h3>
                 <p className="help-text">Review and edit the plan. "Update" items are existing posts to optimize. "New" items are content gaps to fill. The AI will generate all "New" articles and automatically interlink them.</p>
 
                 <div className={`pillar-post-card status-${clusterPlan.pillar.status}`}>
@@ -808,7 +928,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         };
 
         return (
-            <div className="discover-clusters-view">
+            <div className="create-new-form">
+                <h3>Discover Topical Cluster Opportunities</h3>
                 <p className="help-text">Let AI analyze all your published posts to find the most promising topical cluster opportunities to build your site's authority.</p>
                 {wpPosts.length === 0 && (
                     <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
@@ -849,53 +970,25 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
 
     return (
         <div className="step-container" id="step-2-content">
+            <PageHeader title="Content Hub" description="Create new articles, optimize existing posts, or build entire topical clusters to dominate your niche."/>
+            
             {renderPostList()}
+            
             <div id="workspace-container" className="workspace-container">
-                 {activeView === 'edit' && postToUpdate ? (
-                    <div className="editing-grid">
-                        <div className="editor-pane">
-                            {renderEditPostView()}
-                        </div>
-                        <div className="preview-pane">
-                            <h3>Original Post Preview</h3>
-                             <div className="live-preview" dangerouslySetInnerHTML={{ __html: rawContent || '<p>No content loaded.</p>' }} />
-                        </div>
-                    </div>
-                ) : (
-                    <div className="welcome-and-create-container">
-                        {activeView === 'welcome' && renderWelcomeView()}
-                        {activeView === 'new' && (
-                            <div className="create-new-form">
-                                <h2>Create New Post</h2>
-                                {renderNewPostView()}
-                            </div>
-                        )}
-                        {activeView === 'batch' && (
-                            <div className="create-new-form">
-                                <h2>Batch Create Posts</h2>
-                                {renderBatchCreateView()}
-                             </div>
-                        )}
-                        {activeView === 'cluster' && (
-                            <div className="create-new-form">
-                                <h2>Topical Cluster Strategy</h2>
-                                {renderClusterView()}
-                            </div>
-                        )}
-                         {activeView === 'clusterPlan' && (
-                            <div className="create-new-form">
-                                {loading.batch ? renderBatchCreateView() : renderClusterPlanView()}
-                            </div>
-                        )}
-                         {activeView === 'discover' && (
-                            <div className="create-new-form">
-                                <h2>Discover Topical Cluster Opportunities</h2>
-                                {renderDiscoverClustersView()}
-                            </div>
-                        )}
-                    </div>
-                )}
+                {activeView === 'welcome' && renderWelcomeView()}
+                {activeView === 'new' && renderNewPostView()}
+                {activeView === 'edit' && postToUpdate && renderEditPostView()}
+                {activeView === 'batch' && renderBatchCreateView()}
+                {activeView === 'cluster' && renderClusterView()}
+                {activeView === 'clusterPlan' && (loading.batch ? renderBatchCreateView() : renderClusterPlanView())}
+                {activeView === 'discover' && renderDiscoverClustersView()}
             </div>
+            
+            <button className="fab" onClick={handleCreateNewClick} title="Create New Post">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+            </button>
         </div>
     );
 };
@@ -1029,6 +1122,8 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
 
     return (
         <div id="step-3-review">
+             <PageHeader title="Review & Publish" description="Fine-tune the generated content, metadata, and images before publishing directly to your WordPress site."/>
+
             {duplicateInfo.similarUrl && publishMode === 'update' && !hasPublished && (
                  <div className="warning-box">
                     <h4>⚠️ Updating Existing Post</h4>
@@ -1037,23 +1132,42 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
                 </div>
             )}
             
-            <div className="review-tabs">
-                <button 
-                    className={`tab-btn ${activeTab === 'editor' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('editor')}>
-                    Editor
-                </button>
-                <button 
-                    className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('preview')}>
-                    Preview
-                </button>
-            </div>
+            <div className="review-layout-grid">
+                <div className="review-main">
+                    <div className="review-tabs">
+                        <button 
+                            className={`tab-btn ${activeTab === 'editor' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('editor')}>
+                            HTML Editor
+                        </button>
+                        <button 
+                            className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('preview')}>
+                            Live Preview
+                        </button>
+                    </div>
 
-            <div className="review-layout">
-                <div className={`review-panel editor-panel ${activeTab !== 'editor' ? 'is-mobile-hidden' : ''}`}>
-                    <h3>Editor</h3>
-                    <div className="review-panel-content">
+                     <div className="review-content">
+                        {activeTab === 'editor' && (
+                            <div className="review-panel-content">
+                                 <div className="form-group">
+                                    <div className="label-wrapper">
+                                        <label htmlFor="finalContent">Generated HTML Content</label>
+                                        <CopyButton textToCopy={finalContent} />
+                                    </div>
+                                    <textarea id="finalContent" value={finalContent} onChange={e => setField('finalContent', e.target.value)} style={{minHeight: '300px', fontFamily: 'monospace'}}></textarea>
+                                </div>
+                            </div>
+                        )}
+                         {activeTab === 'preview' && (
+                            <div className="review-panel-content live-preview" dangerouslySetInnerHTML={{ __html: renderedContent }} />
+                        )}
+                    </div>
+                </div>
+
+                <aside className="review-side-panel">
+                    <div className="side-panel-card">
+                        <h4>SEO & Metadata</h4>
                         <div className="form-group">
                             <label htmlFor="finalTitle">Generated Title</label>
                             <input type="text" id="finalTitle" value={finalTitle} onChange={e => setField('finalTitle', e.target.value)} />
@@ -1071,7 +1185,10 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
                         </div>
                         <ChipEditor items={tags} setItems={setTags} label="Tags" placeholder="Add a tag..." />
                         <ChipEditor items={categories} setItems={setCategories} label="Categories" placeholder="Add a category..." />
-                        
+                    </div>
+
+                    <div className="side-panel-card">
+                        <h4>Media Assets</h4>
                         <FeaturedImageGenerator 
                             title={finalTitle} 
                             featuredImage={featuredImage} 
@@ -1083,68 +1200,62 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
                         {infographics && infographics.length > 0 && (
                             <div className="infographic-blueprints">
                                 <h4>Infographics</h4>
-                                {infographics.map((info) => (
-                                    <div key={info.id} className="infographic-card">
-                                        <div className="image-preview-container">
-                                            {loading[`infographic-${info.id}`] && <div className="spinner"></div>}
-                                            {!loading[`infographic-${info.id}`] && info.base64 && <img src={`data:image/jpeg;base64,${info.base64}`} alt={info.title} />}
+                                {infographics.map((info) => {
+                                    const dataAsString = typeof info.data === 'object' && info.data !== null 
+                                        ? JSON.stringify(info.data, null, 2) 
+                                        : String(info.data || '');
+
+                                    return (
+                                        <div key={info.id} className="infographic-card">
+                                            <div className="image-preview-container">
+                                                {loading[`infographic-${info.id}`] && <div className="spinner"></div>}
+                                                {!loading[`infographic-${info.id}`] && info.base64 && <img src={`data:image/jpeg;base64,${info.base64}`} alt={info.title} />}
+                                            </div>
+                                            <details>
+                                                <summary>{`${info.title}`}</summary>
+                                                 <div className="image-prompt-group" style={{marginTop: '1rem'}}>
+                                                    <input type="text" value={info.imagePrompt} onChange={e => setInfographic(info.id, {...info, imagePrompt: e.target.value})} />
+                                                    <button onClick={() => onImageRegen('infographic', info.id, info.imagePrompt)} className="btn" disabled={loading[`infographic-${info.id}`]}>
+                                                        {loading[`infographic-${info.id}`] ? '...' : 'Regen'}
+                                                    </button>
+                                                </div>
+                                                <div className="infographic-card-data-wrapper">
+                                                    <pre className="infographic-card-data">{dataAsString}</pre>
+                                                    <CopyButton textToCopy={dataAsString} />
+                                                </div>
+                                            </details>
                                         </div>
-                                        <details>
-                                            <summary>{`${info.title}`}</summary>
-                                             <div className="image-prompt-group" style={{marginTop: '1rem'}}>
-                                                <input type="text" value={info.imagePrompt} onChange={e => setInfographic(info.id, {...info, imagePrompt: e.target.value})} />
-                                                <button onClick={() => onImageRegen('infographic', info.id, info.imagePrompt)} className="btn" disabled={loading[`infographic-${info.id}`]}>
-                                                    {loading[`infographic-${info.id}`] ? '...' : 'Regen'}
-                                                </button>
-                                            </div>
-                                            <div className="infographic-card-data-wrapper">
-                                                <pre className="infographic-card-data">{info.data}</pre>
-                                                <CopyButton textToCopy={info.data} />
-                                            </div>
-                                        </details>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
-
-                         <div className="form-group" style={{marginTop: '1.5rem'}}>
-                            <div className="label-wrapper">
-                                <label htmlFor="finalContent">Generated HTML Content</label>
-                                <CopyButton textToCopy={finalContent} />
-                            </div>
-                            <textarea id="finalContent" value={finalContent} onChange={e => setField('finalContent', e.target.value)} style={{minHeight: '300px', fontFamily: 'monospace'}}></textarea>
-                        </div>
                     </div>
-                </div>
-                <div className={`review-panel preview-panel ${activeTab !== 'preview' ? 'is-mobile-hidden' : ''}`}>
-                    <h3>Live Preview</h3>
-                    <div className="review-panel-content live-preview" dangerouslySetInnerHTML={{ __html: renderedContent }} />
-                </div>
+                </aside>
             </div>
-
-            {hasPublished ? (
-                <div className="post-publish-actions">
-                    <h3>What's next?</h3>
-                    <div className="button-group">
+            
+            <div className="button-group">
+                {hasPublished ? (
+                    <>
+                        <h3>What's next?</h3>
                         <button onClick={() => dispatch({type: 'RESET_FOR_NEW_POST'})} className="btn">
                             Create/Update Another Post
                         </button>
-                        <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn" style={{backgroundColor: '#4B5563'}}>
+                        <button onClick={() => dispatch({type: 'SET_STEP', payload: 1})} className="btn btn-secondary">
                             Start Over (New Config)
                         </button>
-                    </div>
-                </div>
-            ) : (
-                <div className="button-group" style={{maxWidth: '1200px', margin: '2rem auto 0'}}>
-                    <button onClick={() => dispatch({type: 'SET_STEP', payload: 2})} className="btn" style={{backgroundColor: '#4B5563'}}>Back to Content</button>
-                    <button onClick={() => onPostAction(publishMode)} className="btn" disabled={loading.publish}>
-                        {loading.publish 
-                            ? (publishMode === 'update' ? 'Updating...' : 'Publishing...')
-                            : (publishMode === 'update' ? 'Update Existing Post' : 'Publish to WordPress')
-                        }
-                    </button>
-                </div>
-            )}
+                    </>
+                ) : (
+                    <>
+                        <button onClick={() => dispatch({type: 'SET_STEP', payload: 2})} className="btn btn-secondary">Back to Content</button>
+                        <button onClick={() => onPostAction(publishMode)} className="btn" disabled={loading.publish}>
+                            {loading.publish 
+                                ? (publishMode === 'update' ? 'Updating...' : 'Publishing...')
+                                : (publishMode === 'update' ? 'Update Existing Post' : 'Publish to WordPress')
+                            }
+                        </button>
+                    </>
+                )}
+            </div>
         </div>
     );
 };
@@ -1364,27 +1475,6 @@ function appReducer(state, action) {
             throw new Error(`Unhandled action type: ${action.type}`);
     }
 }
-
-const PromotionBanner = () => {
-    return (
-        <div className="promo-banner-container">
-            <div className="promo-banner-bg"></div>
-            <div className="promo-banner-content">
-                <div className="promo-banner-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 21.75l-.648-1.188a2.25 2.25 0 01-1.423-1.423L13.5 18.75l1.188-.648a2.25 2.25 0 011.423-1.423L16.25 15l.648 1.188a2.25 2.25 0 011.423 1.423L18.75 18l-1.188.648a2.25 2.25 0 01-1.423 1.423z" /></svg>
-                </div>
-                <div className="promo-banner-text">
-                    <strong>Dominate Your Niche</strong>
-                    <span>Unlock Your Complete AI-Powered SEO Arsenal</span>
-                </div>
-                <a href="https://seo-hub.affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer" className="promo-banner-cta">
-                    <span>Unlock Your Arsenal</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                </a>
-            </div>
-        </div>
-    );
-};
 
 
 // Main App Component
@@ -2733,81 +2823,30 @@ ${allPostTitles.join('\n')}
                 return <div>Invalid Step</div>;
         }
     }
+    
+    const canNavigate = state.wpConnectionStatus === 'success' && state.keyStatus[state.aiProvider] === 'valid';
+    const handleNavigation = (step) => dispatch({ type: 'SET_STEP', payload: step });
 
     return (
-        <div className="container">
-            <header className="app-header">
-                <div className="logo">🚀</div>
-                <div>
-                    <h1>WordPress Content Optimizer Pro</h1>
-                    <p className="byline">A Tool by <a href="https://affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer">AffiliateMarketingForSuccess.com</a></p>
-                </div>
-            </header>
-            
-            <p className="subtitle">Your enterprise-grade assistant for formatting, internally linking, and publishing SEO-optimized content directly to WordPress.</p>
-            
-            <PromotionBanner />
-            
-            {state.step === 1 && (
-                <div className="value-prop-highlight">
-                    <h2>Gain an Unfair Advantage in Content Marketing</h2>
-                    <p className="sizzle-text">This isn't just another AI writer. It's an end-to-end SEO content automation engine that analyzes your competitors, fills their content gaps, and publishes superior articles directly to your WordPress site.</p>
-                    
-                    <div className="features-grid">
-                        <div className="feature-card">
-                            <div className="feature-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 21.75l-.648-1.188a2.25 2.25 0 01-1.423-1.423L13.5 18.75l1.188-.648a2.25 2.25 0 011.423-1.423L16.25 15l.648 1.188a2.25 2.25 0 011.423 1.423L18.75 18l-1.188.648a2.25 2.25 0 01-1.423 1.423z" /></svg>
-                            </div>
-                            <h3>AI-Powered Strategy</h3>
-                            <p>Unlike others, we don't just write. Our AI performs a live SERP analysis to identify content gaps, ensuring your articles are built to outrank the competition from day one.</p>
-                        </div>
+        <div className="app-container">
+            <Sidebar currentStep={state.step} onNavigate={handleNavigation} canNavigate={canNavigate} />
+            <main className="main-content">
+                {renderStep()}
 
-                        <div className="feature-card">
-                            <div className="feature-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
-                            </div>
-                            <h3>End-to-End Automation</h3>
-                            <p>Go from raw idea to a fully formatted, internally linked, and SEO-optimized post—complete with AI-generated images—published directly to WordPress in minutes, not hours.</p>
-                        </div>
-                        
-                        <div className="feature-card">
-                            <div className="feature-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" /></svg>
-                            </div>
-                            <h3>Secure & Private</h3>
-                            <p>Your API keys and WordPress credentials are processed exclusively in your browser. Nothing is ever stored on our servers, ensuring your data remains 100% private.</p>
-                        </div>
+                 {state.logs.length > 0 && (
+                    <div className="status-container">
+                        <ul className="status-log" aria-live="polite">
+                            {state.logs.map((log, index) => <li key={index}>{log}</li>)}
+                        </ul>
                     </div>
-                </div>
-            )}
-            
-            <ProgressBar currentStep={state.step} />
+                )}
 
-            {renderStep()}
-
-            {state.logs.length > 0 && (
-                <div className="status-container">
-                    <ul className="status-log" aria-live="polite">
-                        {state.logs.map((log, index) => <li key={index}>{log}</li>)}
-                    </ul>
-                </div>
-            )}
-
-            {state.result && (
-                <div className={`result ${state.result.type}`} role="alert" dangerouslySetInnerHTML={{ __html: state.result.message }}>
-                </div>
-            )}
-            
-            <footer className="app-footer">
-                <p>Learn more about winning content strategies:</p>
-                <ul>
-                    <li><a href="https://affiliatemarketingforsuccess.com/blogging/winning-content-strategy/" target="_blank" rel="noopener noreferrer">Winning Content Strategy</a></li>
-                    <li><a href="https://affiliatemarketingforsuccess.com/seo/seo-writing-a-complete-guide-to-seo-writing/" target="_blank" rel="noopener noreferrer">Complete Guide to SEO Writing</a></li>
-                    <li><a href="https://affiliatemarketingforsuccess.com/affiliate-marketing/best-ai-affiliate-niches/" target="_blank" rel="noopener noreferrer">Best AI Affiliate Niches</a></li>
-                    <li><a href="https://affiliatemarketingforsuccess.com/review/the-ultimate-jasper-ai-review/" target="_blank" rel="noopener noreferrer">AI Tool Reviews</a></li>
-                </ul>
-                <p className="copyright">&copy; {new Date().getFullYear()} AffiliateMarketingForSuccess.com. All Rights Reserved.</p>
-            </footer>
+                {state.result && (
+                    <div className={`result ${state.result.type}`} role="alert" dangerouslySetInnerHTML={{ __html: state.result.message }}>
+                    </div>
+                )}
+            </main>
+             <BottomNav currentStep={state.step} onNavigate={handleNavigation} canNavigate={canNavigate} />
         </div>
     );
 };
