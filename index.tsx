@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
@@ -17,32 +16,50 @@ const debounce = (func, delay) => {
 };
 
 /**
- * A professional, state-of-the-art promise queue processor.
- * It executes a series of promise-returning functions sequentially with a delay,
- * preventing API rate-limiting issues and providing progress updates.
+ * A professional, state-of-the-art concurrent promise queue processor.
+ * It executes a series of promise-returning functions in parallel with a concurrency limit,
+ * preventing API rate-limiting issues while maximizing throughput.
  * @param items The array of items to process.
  * @param promiseFn The function that takes an item and returns a promise.
  * @param onProgress Optional callback to report progress for each item.
- * @param delay The delay in ms between each promise execution.
+ * @param concurrency The maximum number of promises to run in parallel.
  */
-const processPromiseQueue = async (items, promiseFn, onProgress, delay = 1000) => {
-    const results = [];
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        try {
-            const result = await promiseFn(item);
-            results.push({ status: 'fulfilled', value: result });
-            if (onProgress) onProgress({ item, result, index: i, success: true });
-        } catch (error) {
-            results.push({ status: 'rejected', reason: error });
-            if (onProgress) onProgress({ item, error, index: i, success: false });
+const processConcurrentPromiseQueue = async <T, R>(
+    items: T[],
+    promiseFn: (item: T) => Promise<R>,
+    onProgress: (progress: { item: T; result?: R; error?: Error; index: number; success: boolean }) => void,
+    concurrency: number = 3
+) => {
+    const queue = [...items.map((item, index) => ({ item, index }))];
+    const results = new Array(items.length);
+    const runningPromises: Promise<void>[] = [];
+
+    const worker = async () => {
+        while (queue.length > 0) {
+            const task = queue.shift();
+            if (!task) continue;
+            const { item, index } = task;
+
+            try {
+                const result = await promiseFn(item);
+                results[index] = { status: 'fulfilled', value: result };
+                if (onProgress) onProgress({ item, result, index, success: true });
+            } catch (error) {
+                const err = error instanceof Error ? error : new Error(String(error));
+                results[index] = { status: 'rejected', reason: err };
+                if (onProgress) onProgress({ item, error: err, index, success: false });
+            }
         }
-        if (i < items.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-        }
+    };
+
+    for (let i = 0; i < concurrency; i++) {
+        runningPromises.push(worker());
     }
+
+    await Promise.all(runningPromises);
     return results;
 };
+
 
 const SITE_PROMOTION_URLS = [
     "https://affiliatemarketingforsuccess.com/blog/", "https://affiliatemarketingforsuccess.com/seo/write-meta-descriptions-that-convert/", "https://affiliatemarketingforsuccess.com/blogging/winning-content-strategy/", "https://affiliatemarketingforsuccess.com/review/copy-ai-review/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-choose-a-web-host/", "https://affiliatemarketingforsuccess.com/ai/detect-ai-writing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/warriorplus-affiliate-program-unlock-lucrative-opportunities/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/understanding-what-is-pay-per-call-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/how-chatbot-can-make-you-money/", "https://affiliatemarketingforsuccess.com/info/influencer-marketing-sales/", "https://affiliatemarketingforsuccess.com/ai/the-power-of-large-language-models/", "https://affiliatemarketingforsuccess.com/how-to-start/10-simple-steps-to-build-your-website-a-beginners-guide/", "https://affiliatemarketingforsuccess.com/blogging/sustainable-content/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-discounts-on-black-friday/", "https://affiliatemarketingforsuccess.com/seo/website-architecture-that-drives-conversions/", "https://affiliatemarketingforsuccess.com/blogging/how-to-create-evergreen-content/", "https://affiliatemarketingforsuccess.com/email-marketing/email-marketing-benefits/", "https://affiliatemarketingforsuccess.com/blogging/promote-your-blog-to-increase-traffic/", "https://affiliatemarketingforsuccess.com/ai/discover-the-power-of-chatgpt/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-with-personalized-recommendations/", "https://affiliatemarketingforsuccess.com/seo/benefits-of-an-effective-seo-strategy/", "https://affiliatemarketingforsuccess.com/ai/what-is-ai-prompt-engineering/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/successful-in-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/join-the-best-affiliate-networks/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/beginners-guide-to-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/high-ticket-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/enhance-your-affiliate-marketing-content/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-do-affiliate-marketing-on-shopify/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/discover-why-affiliate-marketing-is-the-best-business-model/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-affiliate-marketing-helps-you-to-become-an-influencer/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-affiliate-marketing-on-blog/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-networks/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-create-a-landing-page-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/review/scalenut-review/", "https://affiliatemarketingforsuccess.com/seo/how-to-improve-your-content-marketing-strategy-in-2025/", "https://affiliatemarketingforsuccess.com/ai/startup-success-with-chatgpt/", "https://affiliatemarketingforsuccess.com/blogging/market-your-blog-the-right-way/", "https://affiliatemarketingforsuccess.com/ai/surfer-seo-alternatives/", "https://affiliatemarketingforsuccess.com/ai/avoid-ai-detection/", "https://affiliatemarketingforsuccess.com/seo/optimize-your-off-page-seo-strategy/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-alternative/", "https://affiliatemarketingforsuccess.com/seo/build-an-effective-seo-strategy/", "https://affiliatemarketingforsuccess.com/email-marketing/understanding-email-marketing/", "https://affiliatemarketingforsuccess.com/ai/write-handwritten-assignments/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-secrets/", "https://affiliatemarketingforsuccess.com/seo/boost-your-organic-ranking/", "https://affiliatemarketingforsuccess.com/seo/how-to-use-google-my-business-to-improve-your-blogs-local-seo/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-tips-for-beginners/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-occupation-prompts/", "https://affiliatemarketingforsuccess.com/ai/perplexity-copilot/", "https://affiliatemarketingforsuccess.com/ai/agility-writer-vs-autoblogging-ai/", "https://affiliatemarketingforsuccess.com/ai/split-testing-perplexity-pages-affiliate-sales/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai-affiliate-funnels-automation/", "https://affiliatemarketingforsuccess.com/ai/ai-content-detectors-reliability/", "https://affiliatemarketingforsuccess.com/ai/google-bard-bypass-detection/", "https://affiliatemarketingforsuccess.com/ai/teachers-detect-gpt-4/", "https://affiliatemarketingforsuccess.com/ai/how-to-write-with-perplexity-ai/", "https://affiliatemarketingforsuccess.com/ai/turnitin-ai-detection-accuracy/", "https://affiliatemarketingforsuccess.com/ai/undetectable-ai-alternatives/", "https://affiliatemarketingforsuccess.com/ai/perplexity-jailbreak-prompts-2/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/earn-generous-commissions-with-walmart-affiliate-program/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-increase-your-affiliate-marketing-conversion-rate/", "https://affiliatemarketingforsuccess.com/ai/how-chat-gpt-will-change-education/", "https://affiliatemarketingforsuccess.com/email-marketing/getresponse-review-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-create-an-affiliate-marketing-strategy/", "https://affiliatemarketingforsuccess.com/ai/perplexity-model/", "https://affiliatemarketingforsuccess.com/email-marketing/proven-ways-to-grow-your-email-list/", "https://affiliatemarketingforsuccess.com/ai/undetectable-ai/", "https://affiliatemarketingforsuccess.com/review/use-fiverr-gigs-to-boost-your-business/", "https://affiliatemarketingforsuccess.com/seo/google-ranking-factors/", "https://affiliatemarketingforsuccess.com/ai/how-chat-gpt-is-different-from-google/", "https://affiliatemarketingforsuccess.com/blogging/a-guide-to-copyediting-vs-copywriting/", "https://affiliatemarketingforsuccess.com/email-marketing/craft-irresistible-email-newsletters/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-on-instagram/", "https://affiliatemarketingforsuccess.com/ai/integrate-perplexity-ai-affiliate-tech-stack/", "https://affiliatemarketingforsuccess.com/ai/affiliate-marketing-perplexity-ai-future/", "https://affiliatemarketingforsuccess.com/blogging/increase-domain-authority-quickly/", "https://affiliatemarketingforsuccess.com/review/wp-rocket-boost-wordpress-performance/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/shein-affiliate-program-usa-fashionable-earnings-await-you/", "https://affiliatemarketingforsuccess.com/ai/auto-ai-transforming-industries-with-automation/", "https://affiliatemarketingforsuccess.com/ai/is-turnitin-free/", "https://affiliatemarketingforsuccess.com/review/getresponse-vs-clickfunnels/", "https://affiliatemarketingforsuccess.com/ai/autoblogging-ai-review/", "https://affiliatemarketingforsuccess.com/tools/affiliate-link-generator/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-creative-writing-prompts/", "https://affiliatemarketingforsuccess.com/ai/undetectable-ai-review/", "https://affiliatemarketingforsuccess.com/ai/best-ai-detector/", "https://affiliatemarketingforsuccess.com/ai/ai-future-of-seo/", "https://affiliatemarketingforsuccess.com/review/clickfunnels-review/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-plagiarize/", "https://affiliatemarketingforsuccess.com/ai/turnitin-detect-quillbot-paraphrasing/", "https://affiliatemarketingforsuccess.com/ai/use-turnitin-checker/", "https://affiliatemarketingforsuccess.com/ai/turnitin-read-images/", "https://affiliatemarketingforsuccess.com/ai/turnitin-ai-detection-free/", "https://affiliatemarketingforsuccess.com/ai/jobs-in-danger-due-to-gpt-4/", "https://affiliatemarketingforsuccess.com/ai/surfer-ai-review/", "https://affiliatemarketingforsuccess.com/tools/content-idea-generator/", "https://affiliatemarketingforsuccess.com/review/getresponse-vs-mailchimp/", "https://affiliatemarketingforsuccess.com/ai/turnitin-plagiarism/", "https://affiliatemarketingforsuccess.com/email-marketing/getresponse-vs-tinyemail/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/struggling-with-wordpress/", "https://affiliatemarketingforsuccess.com/ai/learn-prompt-engineering/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-promote-affiliate-products-without-a-website/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-playground/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-api/", "https://affiliatemarketingforsuccess.com/review/frase-review-2025/", "https://affiliatemarketingforsuccess.com/review/seowriting-ai-review/", "https://affiliatemarketingforsuccess.com/tools/seo-keyword-research-tool/", "https://affiliatemarketingforsuccess.com/tools/affiliate-program-comparison-tool/", "https://affiliatemarketingforsuccess.com/review/writesonic-review/", "https://affiliatemarketingforsuccess.com/blogging/content-marketing-must-educate-and-convert-the-customer/", "https://affiliatemarketingforsuccess.com/blogging/how-to-successfully-transition-into-copywriting/", "https://affiliatemarketingforsuccess.com/blogging/how-to-use-new-methods-to-capture-leads/", "https://affiliatemarketingforsuccess.com/blogging/update-old-blog-content/", "https://affiliatemarketingforsuccess.com/review/frase-io-vs-quillbot/", "https://affiliatemarketingforsuccess.com/blogging/testimonials-as-blog-content-in-2024/", "https://affiliatemarketingforsuccess.com/blogging/overcoming-blog-stagnation/", "https://affiliatemarketingforsuccess.com/seo/web-positioning-in-google/", "https://affiliatemarketingforsuccess.com/blogging/the-blogging-lifestyle/", "https://affiliatemarketingforsuccess.com/review/bramework-review/", "https://affiliatemarketingforsuccess.com/seo/how-will-voice-search-impact-your-seo-strategy/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-succeed-in-email-marketing/", "https://affiliatemarketingforsuccess.com/review/spreadsimple-review/", "https://affiliatemarketingforsuccess.com/ai/boost-affiliate-earnings-perplexity-ai/", "https://affiliatemarketingforsuccess.com/tools/script-timer-tool/", "https://affiliatemarketingforsuccess.com/ai/agility-writer-review/", "https://affiliatemarketingforsuccess.com/review/inkforall-review-2024/", "https://affiliatemarketingforsuccess.com/web-hosting/web-hosting-comparison/", "https://affiliatemarketingforsuccess.com/ai/is-chatgpt-down-what-happened-and-how-to-fix-it/", "https://affiliatemarketingforsuccess.com/review/namehero-hosting-review/", "https://affiliatemarketingforsuccess.com/review/katteb-review/", "https://affiliatemarketingforsuccess.com/blogging/wordpress-blogging-tips/", "https://affiliatemarketingforsuccess.com/review/neuronwriter-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-quickly-can-i-make-money-with-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/step-by-step-in-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-costs-to-start-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/blogging/grow-your-affiliate-marketing-blog/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-niche-selection-mistakes/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-reviews/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-tools/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/digital-marketing-definition/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/build-an-affiliate-marketing-business/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-success/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-ai-affiliate-niches/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-concepts-of-digital-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/building-an-affiliate-marketing-website/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-affiliate-marketing-works/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/maximize-your-startup-potential-leverage-chatgpt-for-startups-with-expert-chatgpt-prompts/", "https://affiliatemarketingforsuccess.com/review/grammarly-premium-review-leveradge-your-writing/", "https://affiliatemarketingforsuccess.com/blogging/how-to-position-your-blog/", "https://affiliatemarketingforsuccess.com/blogging/how-to-quickly-generate-leads/", "https://affiliatemarketingforsuccess.com/blogging/what-is-the-best-structure-of-a-blog-post/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-has-changed-seo-forever/", "https://affiliatemarketingforsuccess.com/blogging/8-tips-for-successful-copywriting/", "https://affiliatemarketingforsuccess.com/blogging/why-do-blogs-fail/", "https://affiliatemarketingforsuccess.com/ai/copywriting-frameworks/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-long-it-takes-to-become-an-affiliate-marketer/", "https://affiliatemarketingforsuccess.com/make-money-online/business-models-to-make-money-online/", "https://affiliatemarketingforsuccess.com/review/blogify-ai-review/", "https://affiliatemarketingforsuccess.com/review/wpx-hosting-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-for-online-business/", "https://affiliatemarketingforsuccess.com/review/kinsta-wordpress-hosting-review/", "https://affiliatemarketingforsuccess.com/review/marketmuse-review/", "https://affiliatemarketingforsuccess.com/blogging/how-to-analyze-your-blogs-user-behavior-metrics/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-examples/", "https://affiliatemarketingforsuccess.com/blogging/how-to-increase-your-online-sales-at-christmas/", "https://affiliatemarketingforsuccess.com/blogging/keys-to-creating-successful-content-on-your-blog/", "https://affiliatemarketingforsuccess.com/review/writesonic-vs-seowriting-ai/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai-revolutionize-affiliate-strategy/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/blogging/create-seo-friendly-blog-posts/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-for-education/", "https://affiliatemarketingforsuccess.com/make-money-online/what-is-the-profile-of-a-successful-online-entrepreneur/", "https://affiliatemarketingforsuccess.com/ai/bard-vs-chatgpt-vs-grok/", "https://affiliatemarketingforsuccess.com/blogging/automate-your-blog-with-artificial-intelligence/", "https://affiliatemarketingforsuccess.com/info/how-to-screenshot-on-chromebook/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-detected-by-safeassign/", "https://affiliatemarketingforsuccess.com/ai/turnitin-vs-grammarly/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/what-are-impressions-in-advertising/", "https://affiliatemarketingforsuccess.com/blogging/11-things-to-outsource-as-a-blogger-for-more-time-and-efficiency/", "https://affiliatemarketingforsuccess.com/email-marketing/email-list-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/review/copy-ai-vs-katteb/", "https://affiliatemarketingforsuccess.com/how-to-start/google-ranking-factors-seo-strategy/", "https://affiliatemarketingforsuccess.com/make-money-online/how-to-make-money-writing-articles-online/", "https://affiliatemarketingforsuccess.com/blogging/best-topics-on-your-digital-marketing-blog/", "https://affiliatemarketingforsuccess.com/web-hosting/digitalocean-review/", "https://affiliatemarketingforsuccess.com/blogging/top-challenges-a-blogger-faces/", "https://affiliatemarketingforsuccess.com/blogging/how-to-boost-the-ranking-of-an-existing-page-on-search-engines/", "https://affiliatemarketingforsuccess.com/blogging/create-your-personal-blog/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-vs-competing-language-models/", "https://affiliatemarketingforsuccess.com/info/paraphrase-text-using-nlp/", "https://affiliatemarketingforsuccess.com/review/pictory-ai-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-track-and-measure-your-affiliate-marketing-performance/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-use-seo-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/seo/mastering-seo-best-practices/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-much-time-it-takes-to-earn-from-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/blogging/google-pagespeed-insights/", "https://affiliatemarketingforsuccess.com/blogging/the-imposter-syndrome/", "https://affiliatemarketingforsuccess.com/blogging/lead-nurturing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-vs-dropshipping/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-make-money-with-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/seo/the-importance-of-seo-for-your-blog/", "https://affiliatemarketingforsuccess.com/how-to-start/criteria-for-profitable-affiliate-niches/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-give-same-answers/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/why-affiliate-marketers-fail/", "https://affiliatemarketingforsuccess.com/ai/winston-detect-quillbot/", "https://affiliatemarketingforsuccess.com/ai/quillbot-bypass-ai-detection/", "https://affiliatemarketingforsuccess.com/ai/how-chatgpt-gets-information/", "https://affiliatemarketingforsuccess.com/email-marketing/effective-email-marketing-strategies/", "https://affiliatemarketingforsuccess.com/ai/semantic-clustering-in-seo/", "https://affiliatemarketingforsuccess.com/ai/semantic-clustering-tools/", "https://affiliatemarketingforsuccess.com/blogging/how-to-write-niche-specific-content/", "https://affiliatemarketingforsuccess.com/make-money-online/optimize-your-sales-funnel/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-affiliate-marketing-niches-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-start-an-affiliate-marketing-blog/", "https://affiliatemarketingforsuccess.com/blogging/how-to-setup-the-basic-seo-technical-foundations-for-your-blog/", "https://affiliatemarketingforsuccess.com/blogging/long-term-content-strategy/", "https://affiliatemarketingforsuccess.com/ai/how-chatgpt-works/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-nlp/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-course/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-ai-art/", "https://affiliatemarketingforsuccess.com/review/semrush-review-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/top-10-affiliate-marketing-trends-in-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/launch-affiliate-business-ai-tools/", "https://affiliatemarketingforsuccess.com/blogging/monetize-your-blog-proven-strategies/", "https://affiliatemarketingforsuccess.com/ai/ethical-implications-of-ai/", "https://affiliatemarketingforsuccess.com/web-hosting/siteground-web-hosting-review-2025/", "https://affiliatemarketingforsuccess.com/ai/deepseek-r1-vs-chatgpt/", "https://affiliatemarketingforsuccess.com/ai/prompt-engineering-jobs/", "https://affiliatemarketingforsuccess.com/ai/perplexity-ai/", "https://affiliatemarketingforsuccess.com/review/the-ultimate-jasper-ai-review/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-use-social-media-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-use-cases/", "https://affiliatemarketingforsuccess.com/seo/the-importance-of-keywords-research/", "https://affiliatemarketingforsuccess.com/ai/ai-prompt-writing/", "https://affiliatemarketingforsuccess.com/blogging/what-is-copywriting-promotes-advertises-or-entertains/", "https://affiliatemarketingforsuccess.com/blogging/how-to-write-a-high-ranking-blog-post/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/generative-ai/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-register-a-domain-name/", "https://affiliatemarketingforsuccess.com/chatgpt-prompts/chatgpt-prompts-for-marketing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-many-affiliate-programs-should-i-join-guide/", "https://affiliatemarketingforsuccess.com/how-to-start/top-10-pro-tips-for-choosing-affiliate-marketing-programs/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/optimize-your-affiliate-marketing-website-for-seo/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-use-youtube-for-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/ai-affiliate-marketing-strategies-2025/", "https://affiliatemarketingforsuccess.com/review/quillbot-review/", "https://affiliatemarketingforsuccess.com/how-to-start/how-to-choose-your-niche/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/how-to-make-money-with-amazon-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/ai/best-chatgpt-alternatives-for-2025/", "https://affiliatemarketingforsuccess.com/how-to-start/most-suitable-affiliate-program/", "https://affiliatemarketingforsuccess.com/seo/seo-writing-a-complete-guide-to-seo-writing/", "https://affiliatemarketingforsuccess.com/how-to-start/the-truth-about-web-hosting/", "https://affiliatemarketingforsuccess.com/ai/chatgpt-prompt-engineering/", "https://affiliatemarketingforsuccess.com/blogging/storytelling-in-content-marketing/", "https://affiliatemarketingforsuccess.com/tools/email-marketing-template-generator/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-mistakes/", "https://affiliatemarketingforsuccess.com/seo/keyword-stemming/", "https://affiliatemarketingforsuccess.com/ai/multimodal-ai-models-guide/", "https://affiliatemarketingforsuccess.com/ai/large-language-models-comparison-2025/", "https://affiliatemarketingforsuccess.com/ai/gpt-4o-vs-gemini/", "https://affiliatemarketingforsuccess.com/ai/multimodal-prompt-engineering/", "https://affiliatemarketingforsuccess.com/ai/claude-4-guide/", "https://affiliatemarketingforsuccess.com/seo/programmatic-seo/", "https://affiliatemarketingforsuccess.com/blogging/blogging-mistakes-marketers-make/", "https://affiliatemarketingforsuccess.com/seo/why-your-current-seo-strategy-is-failing/", "https://affiliatemarketingforsuccess.com/blogging/how-to-brand-storytelling/", "https://affiliatemarketingforsuccess.com/seo/doing-an-seo-audit/", "https://affiliatemarketingforsuccess.com/tools/commission-calculator/", "https://affiliatemarketingforsuccess.com/blogging/essential-tools-for-a-blogger/", "https://affiliatemarketingforsuccess.com/blogging/types-of-evergreen-content/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-strategies/", "https://affiliatemarketingforsuccess.com/review/cloudways-review-2025/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-power-of-ai-in-seo/", "https://affiliatemarketingforsuccess.com/ai/artificial-intelligence-machine-learning-revolutionizing-the-future/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/keys-to-successful-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/seo/improve-your-ranking-in-seo/", "https://affiliatemarketingforsuccess.com/blogging/reduce-bounce-rate/", "https://affiliatemarketingforsuccess.com/blogging/what-is-a-creative-copywriter/", "https://affiliatemarketingforsuccess.com/ai/chatgpt4-vs-gemini-pro-in-blog-writing/", "https://affiliatemarketingforsuccess.com/blogging/build-a-blogging-business-from-scratch/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/the-ultimate-guide-to-affiliate-marketing/", "https://affiliatemarketingforsuccess.com/email-marketing/convertkit-pricing/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/best-affiliate-products-to-promote/", "https://affiliatemarketingforsuccess.com/make-money-online/how-to-make-money-with-clickbank-the-ultimate-guide/", "https://affiliatemarketingforsuccess.com/seo/link-building-strategies/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/affiliate-marketing-on-pinterest/", "https://affiliatemarketingforsuccess.com/blogging/blog-monetization-strategies/", "https://affiliatemarketingforsuccess.com/affiliate-marketing/why-is-affiliate-marketing-so-hard/", "https://affiliatemarketingforsuccess.com/ai/originality-ai-review/", "https://affiliatemarketingforsuccess.com/ai/how-chatbot-helps-developers/", "https://affiliatemarketingforsuccess.com/info/how-to-make-a-social-media-marketing-plan/", "https://affiliatemarketingforsuccess.com/blogging/countless-benefits-of-blogging/", "https://affiliatemarketingforsuccess.com/ai/the-anthropic-prompt-engineer/", "https://affiliatemarketingforsuccess.com/ai/nvidia-ai/", "https://affiliatemarketingforsuccess.com/chatgpt-prompts/awesome-chatgpt-prompts/", "https://affiliatemarketingforsuccess.com/ai/ai-powered-semantic-clustering/", "https://affiliatemarketingforsuccess.com/ai/semantic-clustering-techniques/", "https://affiliatemarketingforsuccess.com/ai/benefits-of-semantic-clustering/"
@@ -327,32 +344,44 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     
     // UI State
     const [activeView, setActiveView] = useState('welcome'); // 'welcome', 'new', 'edit', 'batch'
-    const [activeSidebarTab, setActiveSidebarTab] = useState('update'); // 'update', 'create'
     const [createMode, setCreateMode] = useState('single'); // 'single', 'batch'
     const [batchTopics, setBatchTopics] = useState('');
 
     // Post List State
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState({ key: 'modified', direction: 'ascending' });
+    const [sortConfig, setSortConfig] = useState({ key: 'modified', direction: 'descending' });
     const [hideUpdated, setHideUpdated] = useState(false);
 
     useEffect(() => {
         if (postToUpdate) {
             setActiveView('edit');
-            setActiveSidebarTab('update'); // Switch to update tab if a post is selected
+        } else {
+            // If postToUpdate is cleared, go back to welcome screen for this workspace
+            if (activeView === 'edit') {
+                setActiveView('welcome');
+            }
         }
     }, [postToUpdate]);
     
     const handleCreateNewClick = () => {
         dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
-        setActiveSidebarTab('create');
-        setCreateMode('single');
         setActiveView('new');
     };
+    
+    const handleCreateBatchClick = () => {
+         dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
+         setActiveView('batch');
+    }
 
     const handlePostRowClick = (post) => {
         if (!post.canEdit || post.status === 'loading' || post.id === postToUpdate) return;
         onAnalyzeAndSelect(post);
+        
+        // Scroll to the editing workspace
+        const workspace = document.getElementById('workspace-container');
+        if(workspace) {
+            workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     };
 
     const handleBatchItemReview = (job) => {
@@ -436,10 +465,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         <div className="workspace-welcome">
             <div className="icon">✍️</div>
             <h3>Content Hub</h3>
-            <p>Ready to create? Start a brand new article or select an existing post from the sidebar to begin optimizing.</p>
-            <div className="welcome-actions">
-                 <button onClick={handleCreateNewClick} className="btn">+ Create New Post</button>
-             </div>
+            <p>Ready to create? Start a brand new article or select an existing post from the list above to begin optimizing.</p>
         </div>
     );
     
@@ -518,34 +544,44 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     );
 
     const renderPostList = () => (
-        <>
-            <div className="sidebar-header">
+        <div className="post-list-section">
+            <div className="post-list-header">
+                <div className="post-list-header-main">
+                    <h2>Update Existing Content</h2>
+                    <p>Select a post from the list below to analyze, edit, and optimize it.</p>
+                </div>
+                <div className="post-list-actions">
+                    <button onClick={handleCreateNewClick} className="btn">+ Create New Post</button>
+                    <button onClick={handleCreateBatchClick} className="btn btn-secondary">🚀 Batch Create</button>
+                </div>
+            </div>
+
+            <div className="post-list-controls">
                 {wpConnectionStatus !== 'success' ? (
                     <div className="warning-box" style={{margin: '0 0 1rem 0'}}>
                         <p>Verify WordPress connection in Step 1 to manage existing posts.</p>
                     </div>
                 ) : wpPosts.length === 0 ? (
-                    <button onClick={onFetchWpPosts} className="btn" disabled={loading.posts}>
+                    <button onClick={onFetchWpPosts} className="btn" disabled={loading.posts} style={{width: 'auto'}}>
                         {loading.posts ? 'Loading Posts...' : 'Load Published Posts'}
                     </button>
                 ) : (
-                    <div className="sidebar-controls">
-                        <div className="posts-filter-controls">
-                            <input
-                                type="text"
-                                placeholder="Search posts..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="posts-search-input"
-                            />
-                            <div className="checkbox-group">
-                                <input type="checkbox" id="hideUpdated" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
-                                <label htmlFor="hideUpdated">Hide done posts</label>
-                            </div>
+                    <div className="posts-filter-controls">
+                        <input
+                            type="text"
+                            placeholder="Search posts..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="posts-search-input"
+                        />
+                        <div className="checkbox-group">
+                            <input type="checkbox" id="hideUpdated" checked={hideUpdated} onChange={e => setHideUpdated(e.target.checked)} />
+                            <label htmlFor="hideUpdated">Hide done posts</label>
                         </div>
                     </div>
                 )}
             </div>
+
             <div className="posts-list-container">
                 <table className="posts-table">
                     <thead>
@@ -587,89 +623,94 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                     </tbody>
                 </table>
             </div>
-        </>
-    );
-    
-    const renderBatchCreateView = () => (
-        <div className="batch-create-container">
-            <h4>Batch Post Generation</h4>
-            <p className="help-text">Enter one blog post title or topic per line. The AI will generate a full article for each.</p>
-            <div className="form-group">
-                <textarea 
-                    id="batchTopics" 
-                    value={batchTopics}
-                    onChange={e => setBatchTopics(e.target.value)}
-                    placeholder="Example: The Ultimate Guide to SEO in 2025&#10;How to Start Affiliate Marketing for Beginners&#10;Top 10 AI tools for Content Creators"
-                    disabled={loading.batch}
-                    rows={8}
-                ></textarea>
-            </div>
-            <button onClick={() => onGenerateBatch(batchTopics)} className="btn" disabled={loading.batch || !batchTopics.trim()}>
-                {loading.batch ? 'Generating Batch...' : `Generate ${batchTopics.split('\n').filter(t => t.trim()).length} Posts`}
-            </button>
-            
-            {batchJobs.length > 0 && (
-                <div className="batch-jobs-progress">
-                    <h5>Generation Progress</h5>
-                    {batchJobs.map(job => (
-                        <div key={job.id} className={`batch-job-item status-${job.status}`}>
-                            <div className="job-status-icon">
-                                {job.status === 'queued' && '🕒'}
-                                {job.status === 'processing' && <div className="keyword-loading-spinner"></div>}
-                                {job.status === 'done' && '✅'}
-                                {job.status === 'error' && '❌'}
-                            </div>
-                            <div className="job-details">
-                                <p className="job-title">{job.title}</p>
-                                {job.status === 'error' && <p className="job-error">{String(job.result)}</p>}
-                            </div>
-                            {job.status === 'done' && (
-                                <button className="btn btn-small" onClick={() => handleBatchItemReview(job)}>Review & Publish</button>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
         </div>
     );
     
-    return (
-        <div className="step-container content-hub-layout" id="step-2-content">
-            <aside className="content-hub-sidebar">
-                <div className="sidebar-tabs">
-                    <button className={`tab-btn ${activeSidebarTab === 'update' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('update')}>Update Existing</button>
-                    <button className={`tab-btn ${activeSidebarTab === 'create' ? 'active' : ''}`} onClick={() => setActiveSidebarTab('create')}>Create New</button>
+    const renderBatchCreateView = () => {
+        const totalJobs = batchJobs.length;
+        const completedJobs = batchJobs.filter(j => j.status === 'done' || j.status === 'error').length;
+        const processingJobsCount = batchJobs.filter(j => j.status === 'processing').length;
+        const topicsCount = batchTopics.split('\n').filter(t => t.trim()).length;
+        
+        return (
+            <div className="batch-create-container">
+                <h4>Batch Post Generation</h4>
+                <p className="help-text">Enter one blog post title or topic per line. The AI will generate a full article for each.</p>
+                <div className="form-group">
+                    <textarea 
+                        id="batchTopics" 
+                        value={batchTopics}
+                        onChange={e => setBatchTopics(e.target.value)}
+                        placeholder="Example: The Ultimate Guide to SEO in 2025&#10;How to Start Affiliate Marketing for Beginners&#10;Top 10 AI tools for Content Creators"
+                        disabled={loading.batch}
+                        rows={8}
+                    ></textarea>
                 </div>
-
-                {activeSidebarTab === 'update' && renderPostList()}
+                <button onClick={() => onGenerateBatch(batchTopics)} className="btn" disabled={loading.batch || !batchTopics.trim()}>
+                    {loading.batch 
+                        ? `Generating (${completedJobs}/${totalJobs})... ${processingJobsCount} in progress`
+                        : `Generate ${topicsCount > 0 ? topicsCount : ''} Posts`
+                    }
+                </button>
                 
-                {activeSidebarTab === 'create' && (
-                    <div className="create-new-content">
-                        <div className="create-mode-tabs">
-                            <button className={`tab-btn ${createMode === 'single' ? 'active' : ''}`} onClick={() => { setCreateMode('single'); setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Single Post</button>
-                            <button className={`tab-btn ${createMode === 'batch' ? 'active' : ''}`} onClick={() => { setCreateMode('batch'); setActiveView('batch'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' }); }}>Batch Create</button>
-                        </div>
-                        {createMode === 'batch' ? renderBatchCreateView() : (
-                            <div style={{paddingTop: '1rem'}}>
-                                <button onClick={() => {setActiveView('new'); dispatch({ type: 'CLEAR_UPDATE_SELECTION' });}} className="btn">+ Create New Post</button>
+                {batchJobs.length > 0 && (
+                    <div className="batch-jobs-progress">
+                        <h5>Generation Progress</h5>
+                        {batchJobs.map(job => (
+                            <div key={job.id} className={`batch-job-item status-${job.status}`}>
+                                <div className="job-status-icon">
+                                    {job.status === 'queued' && '🕒'}
+                                    {job.status === 'processing' && <div className="keyword-loading-spinner"></div>}
+                                    {job.status === 'done' && '✅'}
+                                    {job.status === 'error' && '❌'}
+                                </div>
+                                <div className="job-details">
+                                    <p className="job-title">{job.title}</p>
+                                    {job.status === 'error' && <p className="job-error">{String(job.result)}</p>}
+                                </div>
+                                {job.status === 'done' && (
+                                    <button className="btn btn-small" onClick={() => handleBatchItemReview(job)}>Review & Publish</button>
+                                )}
                             </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+    
+    return (
+        <div className="step-container" id="step-2-content">
+            {renderPostList()}
+            <div id="workspace-container" className="workspace-container">
+                 {activeView === 'edit' && postToUpdate ? (
+                    <div className="editing-grid">
+                        <div className="editor-pane">
+                            {renderEditPostView()}
+                        </div>
+                        <div className="preview-pane">
+                            <h3>Original Post Preview</h3>
+                             <div className="live-preview" dangerouslySetInnerHTML={{ __html: rawContent || '<p>No content loaded.</p>' }} />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="welcome-and-create-container">
+                        {activeView === 'welcome' && renderWelcomeView()}
+                        {activeView === 'new' && (
+                            <div className="create-new-form">
+                                <h2>Create New Post</h2>
+                                {renderNewPostView()}
+                            </div>
+                        )}
+                        {activeView === 'batch' && (
+                            <div className="create-new-form">
+                                <h2>Batch Create Posts</h2>
+                                {renderBatchCreateView()}
+                             </div>
                         )}
                     </div>
                 )}
-
-            </aside>
-            <main className="content-hub-workspace">
-                {activeView === 'welcome' && renderWelcomeView()}
-                {activeView === 'new' && renderNewPostView()}
-                {activeView === 'edit' && renderEditPostView()}
-                {activeView === 'batch' && (
-                    <div className="workspace-welcome">
-                        <div className="icon">🚀</div>
-                        <h3>Batch Generation</h3>
-                        <p>Configure your batch job in the sidebar. Progress and completed posts will appear there once you begin.</p>
-                    </div>
-                )}
-            </main>
+            </div>
         </div>
     );
 };
@@ -956,6 +997,7 @@ const initialState = {
     wpConnectionStatus: 'idle', // idle, verifying, success, error
     wpConnectionError: '',
     wpUserRoles: [],
+    wpCategories: [],
 };
 
 
@@ -979,7 +1021,7 @@ function appReducer(state, action) {
                 wpUrl: '', wpUser: '', wpPassword: '', sitemapUrl: 'https://affiliatemarketingforsuccess.com/sitemap.xml', urlLimit: 500,
                 aiProvider: 'gemini', apiKeys: { gemini: '', openai: '', claude: '', openrouter: '' },
                 keyStatus: { gemini: 'idle', openai: 'idle', claude: 'idle', openrouter: 'idle' },
-                wpConnectionStatus: 'idle', wpConnectionError: '', wpUserRoles: [],
+                wpConnectionStatus: 'idle', wpConnectionError: '', wpUserRoles: [], wpCategories: [],
             };
         case 'UPDATE_FIELD':
             const newState = { ...state, [action.payload.field]: action.payload.value };
@@ -987,6 +1029,7 @@ function appReducer(state, action) {
                 newState.wpConnectionStatus = 'idle';
                 newState.wpConnectionError = '';
                 newState.wpUserRoles = [];
+                newState.wpCategories = [];
             }
             return newState;
         case 'SET_FETCHED_URLS':
@@ -1055,12 +1098,16 @@ function appReducer(state, action) {
         case 'SET_POST_IDEAS':
             return { ...state, postIdeas: action.payload };
         case 'SET_WP_CONNECTION_STATUS':
+            const isSuccess = action.payload.status === 'success';
             return { 
                 ...state, 
                 wpConnectionStatus: action.payload.status,
                 wpConnectionError: action.payload.error || '',
-                wpUserRoles: action.payload.roles || state.wpUserRoles
+                wpUserRoles: action.payload.roles || (isSuccess ? state.wpUserRoles : []),
+                wpCategories: isSuccess ? state.wpCategories : [],
             };
+        case 'SET_WP_CATEGORIES':
+            return { ...state, wpCategories: action.payload };
         case 'START_BATCH_GENERATION':
             return { ...state, loading: { ...state.loading, batch: true }, batchJobs: action.payload, logs: [], result: null };
         case 'UPDATE_BATCH_JOB_STATUS':
@@ -1111,7 +1158,7 @@ function appReducer(state, action) {
 
 const PromotionBanner = () => {
     return (
-        <a href="https://viral-post.affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer" className="promo-banner">
+        <div className="promo-banner-container">
             <div className="promo-banner-bg"></div>
             <div className="promo-banner-content">
                 <div className="promo-banner-icon">
@@ -1121,14 +1168,15 @@ const PromotionBanner = () => {
                     <strong>Dominate Your Niche</strong>
                     <span>Unlock Your Complete AI-Powered SEO Arsenal</span>
                 </div>
-                <div className="promo-banner-cta">
+                <a href="https://seo-hub.affiliatemarketingforsuccess.com/" target="_blank" rel="noopener noreferrer" className="promo-banner-cta">
                     <span>Unlock Your Arsenal</span>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                </div>
+                </a>
             </div>
-        </a>
+        </div>
     );
 };
+
 
 // Main App Component
 const App = () => {
@@ -1179,8 +1227,20 @@ const App = () => {
                 throw new Error(data.message || `Request failed with status ${response.status}`);
             }
             
-            addLog(`✅ Connection successful. Logged in as ${data.name}.`);
+            addLog(`✅ Connection successful. Logged in as ${data.name}. Fetching categories...`);
             dispatch({ type: 'SET_WP_CONNECTION_STATUS', payload: { status: 'success', roles: data.roles } });
+
+            // Fetch categories
+            const categoriesUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/categories?per_page=100&_fields=id,name`;
+            const categoriesResponse = await fetch(categoriesUrl, { headers });
+            if (!categoriesResponse.ok) {
+                addLog('⚠️ Could not fetch WordPress categories, but connection is otherwise valid. AI will generate categories.');
+                dispatch({ type: 'SET_WP_CATEGORIES', payload: [] });
+            } else {
+                const categoriesData = await categoriesResponse.json();
+                dispatch({ type: 'SET_WP_CATEGORIES', payload: categoriesData });
+                addLog(`✅ Found ${categoriesData.length} categories.`);
+            }
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -1578,6 +1638,19 @@ You are updating an existing article. Your mission is to substantially improve i
             linkingInstruction = `**CRITICAL INTERNAL LINKING DIRECTIVE:** You are strictly forbidden from adding any internal links to this article. The necessary list of site URLs was not provided. Do not invent links or use URLs from your general knowledge. This is a non-negotiable rule.`;
         }
 
+        const categoryNames = state.wpCategories.map(c => c.name);
+        let categoryInstruction;
+        let categoryListForPrompt;
+
+        if (categoryNames.length > 0) {
+            categoryInstruction = `Select the SINGLE most relevant category for this article from the 'Website Categories' list provided below. The output MUST be an array containing ONLY that one category name. Do not invent new categories.`;
+            categoryListForPrompt = `**Website Categories for Context:**\n---\n${categoryNames.join('\n')}\n---`;
+        } else {
+            // Fallback if categories couldn't be fetched
+            categoryInstruction = `1-2 relevant categories.`;
+            categoryListForPrompt = `**Website Categories for Context:**\n---\nN/A - Please generate appropriate categories based on the content.\n---`;
+        }
+
         const basePrompt = `
 ${updateInstructions}
 
@@ -1608,11 +1681,11 @@ You will perform the following sequence:
 
 # JSON OUTPUT FORMAT
 - \`title\`: (String) A compelling, SEO-friendly title.
-- \`slug\`: (String) A short, SEO-friendly, URL-safe slug.
+- \`slug\`: (String) A short (3-5 words), SEO-friendly, URL-safe slug in lowercase with hyphens. **If the content is location-specific, intelligently include the relevant geo-modifier (e.g., city or state) in the slug.**
 - \`metaDescription\`: (String) A compelling, SEO-optimized meta description for SERPs. It must be under 150 characters and use the primary keyword to maximize click-through rate.
 - \`content\`: (String) The full, final HTML of the article (at least 1800 words).
 - \`tags\`: (Array of strings) 3-5 relevant keyword tags.
-- \`categories\`: (Array of strings) 1-2 relevant categories.
+- \`categories\`: (Array of strings) ${categoryInstruction}
 - \`infographics\`: (Array of objects) Blueprints for 3-4 infographics. Each object must have:
     - \`id\`: (String) The unique identifier (UUID) for the placeholder.
     - \`title\`: (String) A descriptive title.
@@ -1627,6 +1700,8 @@ You will perform the following sequence:
 ---
 ${contentToProcess}
 ---
+
+${categoryListForPrompt}
 
 **Website URLs for Context & Internal Linking:**
 ---
@@ -1674,7 +1749,7 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
             addLog(`Raw AI Response: ${responseText}`);
             throw new Error('AI failed to generate a valid JSON response.');
         }
-    }, [aiProvider, apiKeys, openRouterModel, fetchedUrls, addLog]);
+    }, [aiProvider, apiKeys, openRouterModel, fetchedUrls, addLog, state.wpCategories]);
 
     const handleGenerateContent = useCallback(async () => {
         dispatch({ type: 'CLEAR_LOGS' });
@@ -1884,7 +1959,7 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
         } finally {
             dispatch({ type: 'SET_LOADING_STATE', payload: { content: false } });
         }
-    }, [aiProvider, apiKeys, openRouterModel, rawContent, fetchedUrls, wpUrl, wpUser, wpPassword, addLog, handleGenerateImage, generatePostLogic, state.postToUpdate]);
+    }, [aiProvider, apiKeys, openRouterModel, rawContent, fetchedUrls, wpUrl, wpUser, wpPassword, addLog, handleGenerateImage, generatePostLogic, state.postToUpdate, state.wpCategories]);
 
     const handleGenerateBatch = useCallback(async (topics) => {
         const jobs = topics.split('\n').filter(t => t.trim()).map(title => ({ id: Date.now() + Math.random(), title, status: 'queued', result: null }));
@@ -1906,10 +1981,18 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
             };
         };
 
-        const onProgress = ({ item: job, result, success, error }) => {
-            const finalResult = success ? result : error.message;
-            if (success) addLog(`✅ Batch job finished: "${job.title}"`);
-            else addLog(`❌ Batch job failed: "${job.title}" - ${error.message}`);
+        let successCount = 0;
+        let errorCount = 0;
+
+        const onProgress = ({ item: job, result, success, error }: { item: typeof jobs[0], result?: Awaited<ReturnType<typeof generateSinglePost>>, error?: Error, index: number, success: boolean }) => {
+            const finalResult = success ? result : error?.message || 'An unknown error occurred.';
+            if (success) {
+                successCount++;
+                addLog(`✅ Batch job finished: "${job.title}"`);
+            } else {
+                errorCount++;
+                addLog(`❌ Batch job failed: "${job.title}" - ${finalResult}`);
+            }
             
             dispatch({
                 type: 'UPDATE_BATCH_JOB_STATUS',
@@ -1917,9 +2000,9 @@ ${urlsForContext.length > 0 ? urlsForContext.join('\n') : 'N/A - DO NOT ADD INTE
             });
         };
 
-        await processPromiseQueue(jobs, generateSinglePost, onProgress, 5000); // 5 sec delay between API calls
+        await processConcurrentPromiseQueue(jobs, generateSinglePost, onProgress, 3);
 
-        addLog('🎉 Batch generation complete.');
+        addLog(`🎉 Batch generation complete. ${successCount} successful, ${errorCount} failed.`);
         dispatch({ type: 'FINISH_BATCH_GENERATION' });
     }, [generatePostLogic, addLog]);
     
