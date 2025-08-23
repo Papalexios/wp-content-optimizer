@@ -568,6 +568,20 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         }
     }, [postToUpdate, clusterPlan]);
     
+    useEffect(() => {
+        // If batch jobs have been created (from a bulk update, for example) and the UI isn't
+        // currently showing the batch progress view, automatically switch to it. This provides
+        // immediate feedback to the user that their action has started.
+        if (batchJobs.length > 0 && activeView !== 'batch' && activeView !== 'clusterPlan') {
+            setActiveView('batch');
+            const workspace = document.getElementById('workspace-container');
+            if(workspace) {
+                // Scroll the progress view into view for better UX.
+                workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }, [batchJobs, activeView]);
+
     const handleCreateNewClick = () => {
         dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
         dispatch({ type: 'CLEAR_CLUSTER_PLAN' });
