@@ -469,14 +469,15 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
     );
 };
 
-const BatchGenerationView = ({ jobs, topics, isLoading, onGenerate, onReviewItem, dispatch }) => {
+const BatchGenerationView = ({ jobs, topics, isLoading, onGenerate, onReviewItem, dispatch, onBulkPublish, isBulkPublishing }) => {
     const totalJobs = jobs.length;
-    const completedJobs = jobs.filter(j => j.status === 'done').length;
-    const erroredJobs = jobs.filter(j => j.status === 'error').length;
-    const processingJobsCount = jobs.filter(j => j.status === 'processing').length;
+    const doneAndPublished = jobs.filter(j => j.status === 'done' || j.status === 'published').length;
+    const erroredJobs = jobs.filter(j => j.status === 'error' || j.status === 'publish_error').length;
+    const processingJobsCount = jobs.filter(j => j.status === 'processing' || j.status === 'publishing').length;
     const queuedJobs = jobs.filter(j => j.status === 'queued').length;
     const topicsCount = topics.split('\n').filter(t => t.trim()).length;
-    const progressPercent = totalJobs > 0 ? ((completedJobs + erroredJobs) / totalJobs) * 100 : 0;
+    const progressPercent = totalJobs > 0 ? ((doneAndPublished + erroredJobs) / totalJobs) * 100 : 0;
+    const doneJobsForPublishing = jobs.filter(j => j.status === 'done');
 
     return (
         <div className="create-new-form">
@@ -492,51 +493,67 @@ const BatchGenerationView = ({ jobs, topics, isLoading, onGenerate, onReviewItem
                     value={topics}
                     onChange={e => dispatch({ type: 'SET_BATCH_TOPICS', payload: e.target.value })}
                     placeholder="Example: The Ultimate Guide to SEO in 2025&#10;How to Start Affiliate Marketing for Beginners&#10;Top 10 AI tools for Content Creators"
-                    disabled={isLoading}
+                    disabled={isLoading || isBulkPublishing}
                     rows={8}
                 ></textarea>
             </div>
             <div className="button-group" style={{marginTop: '0.5rem', marginBottom: '1.5rem'}}>
-                <button onClick={onGenerate} className="btn" disabled={isLoading || !topics.trim()}>
+                <button onClick={onGenerate} className="btn" disabled={isLoading || isBulkPublishing || !topics.trim()}>
                     {isLoading 
                         ? `Generating...`
                         : `Generate ${topicsCount > 0 ? topicsCount : ''} Posts`
                     }
                 </button>
-                <button onClick={() => dispatch({ type: 'SET_BATCH_TOPICS', payload: '' })} className="btn btn-secondary" disabled={isLoading || !topics.trim()}>Clear Topics</button>
+                <button onClick={() => dispatch({ type: 'SET_BATCH_TOPICS', payload: '' })} className="btn btn-secondary" disabled={isLoading || isBulkPublishing || !topics.trim()}>Clear Topics</button>
             </div>
             
             {jobs.length > 0 && (
                 <div className="batch-jobs-progress">
                     <div className="batch-progress-header">
                          <h5>Generation Progress</h5>
-                         <span className="batch-progress-stats">{completedJobs + erroredJobs} / {totalJobs} Complete</span>
+                         <span className="batch-progress-stats">{doneAndPublished + erroredJobs} / {totalJobs} Complete</span>
                     </div>
                     <div className="progress-bar-container">
                          <div className="progress-bar" style={{ width: `${progressPercent}%` }}></div>
                     </div>
                     <div className="batch-stats-grid">
-                        <div className="stat-item"><span>{completedJobs}</span> ✅ Done</div>
+                        <div className="stat-item"><span>{doneAndPublished}</span> ✅ Done</div>
                         <div className="stat-item"><span>{erroredJobs}</span> ❌ Error</div>
                         <div className="stat-item"><span>{processingJobsCount}</span> ⚙️ Processing</div>
                         <div className="stat-item"><span>{queuedJobs}</span> 🕒 Queued</div>
                     </div>
+
+                     {doneJobsForPublishing.length > 0 && (
+                        <div className="bulk-action-bar-internal">
+                            <h4>Batch Actions</h4>
+                            <p>{doneJobsForPublishing.length} post{doneJobsForPublishing.length > 1 ? 's are' : ' is'} ready. You can review them individually or publish all successful optimizations at once.</p>
+                            <button onClick={onBulkPublish} className="btn" disabled={isBulkPublishing}>
+                                {isBulkPublishing ? `Publishing...` : `🚀 Publish All ${doneJobsForPublishing.length} Successful Posts`}
+                            </button>
+                        </div>
+                    )}
+
 
                     <div className="batch-jobs-list">
                         {jobs.map(job => (
                             <div key={job.id} className={`batch-job-item status-${job.status}`}>
                                 <div className="job-status-icon">
                                     {job.status === 'queued' && '🕒'}
-                                    {job.status === 'processing' && <div className="keyword-loading-spinner"></div>}
+                                    {(job.status === 'processing' || job.status === 'publishing') && <div className="keyword-loading-spinner"></div>}
                                     {job.status === 'done' && '✅'}
-                                    {job.status === 'error' && '❌'}
+                                    {job.status === 'published' && '🚀'}
+                                    {(job.status === 'error' || job.status === 'publish_error') && '❌'}
                                 </div>
                                 <div className="job-details">
                                     <p className="job-title">{job.title}</p>
-                                    {job.status === 'error' && <p className="job-error" title={String(job.result)}>{String(job.result)}</p>}
+                                    {(job.status === 'error' || job.status === 'publish_error') && <p className="job-error" title={String(job.result)}>{String(job.result)}</p>}
+                                     {job.status === 'publishing' && <p className="job-status-text">Publishing to WordPress...</p>}
                                 </div>
                                 {job.status === 'done' && (
-                                    <button className="btn btn-small" onClick={() => onReviewItem(job)}>Review & Publish</button>
+                                    <button className="btn btn-small" onClick={() => onReviewItem(job)} disabled={isBulkPublishing}>Review & Publish</button>
+                                )}
+                                {job.status === 'published' && job.result?.postLink && (
+                                    <a href={job.result.postLink} target="_blank" rel="noopener noreferrer" className="btn btn-small btn-secondary">View Post</a>
                                 )}
                             </div>
                         ))}
@@ -547,7 +564,7 @@ const BatchGenerationView = ({ jobs, topics, isLoading, onGenerate, onReviewItem
     );
 };
 
-const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAnalyzeAndSelect, onGeneratePostIdeas, onGenerateBatch, onLoadBatchResultForReview, onGenerateClusterPlan, onGenerateClusterArticles, onProcessFullCluster, onDiscoverClusters, onOptimizeClusterPost, onBulkUpdate }) => {
+const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAnalyzeAndSelect, onGeneratePostIdeas, onGenerateBatch, onLoadBatchResultForReview, onGenerateClusterPlan, onGenerateClusterArticles, onProcessFullCluster, onDiscoverClusters, onOptimizeClusterPost, onBulkUpdate, onBulkPublish }) => {
     const { rawContent, loading, wpPosts, postToUpdate, wpConnectionStatus, postIdeas, fetchedUrls, batchTopics, batchJobs, clusterTopic, clusterPlan, suggestedClusters, isMultiSelectMode, selectedPosts } = state;
     
     // UI State
@@ -673,7 +690,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                         break;
                     case 'wordCount':
                         aValue = a.wordCount ?? -1;
-                        bValue = b.wordCount ?? -1;
+                        bValue = a.wordCount ?? -1;
                         break;
                     case 'date':
                         aValue = new Date(a.date).getTime();
@@ -1134,6 +1151,8 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
         onGenerate: onGenerateBatch,
         dispatch,
         onReviewItem: handleBatchItemReview,
+        onBulkPublish: onBulkPublish,
+        isBulkPublishing: loading.bulkPublish,
     };
 
     return (
@@ -1148,7 +1167,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 {activeView === 'edit' && postToUpdate && renderEditPostView()}
                 {activeView === 'batch' && <BatchGenerationView {...batchViewProps} />}
                 {activeView === 'cluster' && renderClusterView()}
-                {activeView === 'clusterPlan' && (loading.batch ? <BatchGenerationView {...batchViewProps} /> : renderClusterPlanView())}
+                {activeView === 'clusterPlan' && (loading.batch || loading.bulkPublish ? <BatchGenerationView {...batchViewProps} /> : renderClusterPlanView())}
                 {activeView === 'discover' && renderDiscoverClustersView()}
             </div>
             
@@ -1430,7 +1449,7 @@ const ReviewPublishStep = ({ state, dispatch, onPostAction, onImageRegen }) => {
 
 const initialState = {
     step: 1,
-    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false, wpConnection: false, batch: false, plan: false, discoverClusters: false },
+    loading: { sitemap: false, content: false, publish: false, featuredImage: false, posts: false, ideas: false, wpConnection: false, batch: false, plan: false, discoverClusters: false, bulkPublish: false },
     logs: [],
     result: null,
     wpUrl: '',
@@ -2680,6 +2699,101 @@ ${existingPostTitles}
 
     }, [handleImageRegen, addLog]);
     
+    const executePublishing = useCallback(async (publishPayload) => {
+        const {
+            postId, finalTitle, slug, metaDescription, finalContent,
+            tags, categories, featuredImage, infographics,
+        } = publishPayload;
+
+        const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2`;
+        const credentials = btoa(`${wpUser}:${wpPassword}`);
+        const baseHeaders = { 'Authorization': `Basic ${credentials}` };
+
+        addLog(`🖼️ Uploading all images for "${finalTitle}"...`);
+        const uploadTasks = [];
+        if (featuredImage.base64) {
+            uploadTasks.push({ type: 'featured', base64: featuredImage.base64, altText: finalTitle, filename: 'featured-image.jpg' });
+        }
+        infographics.forEach((info) => {
+            if (info.base64) {
+                uploadTasks.push({ type: 'infographic', id: info.id, base64: info.base64, altText: info.title, filename: `infographic-${info.id}.jpg`});
+            }
+        });
+
+        const uploadImage = async (task) => {
+            const { base64, filename, altText } = task;
+            const blob = await(await fetch(`data:image/jpeg;base64,${base64}`)).blob();
+            const headers = { ...baseHeaders, 'Content-Type': 'image/jpeg', 'Content-Disposition': `attachment; filename="${filename}"`};
+            const res = await fetch(`${apiUrl}/media`, { method: 'POST', headers, body: blob });
+            if (!res.ok) throw new Error(`Failed to upload ${filename}: ${await res.text()}`);
+            const data = await res.json();
+            
+            await fetch(`${apiUrl}/media/${data.id}`, {
+                method: 'POST',
+                headers: {...baseHeaders, 'Content-Type': 'application/json'},
+                body: JSON.stringify({ alt_text: altText, title: altText })
+            });
+
+            return { ...task, mediaId: data.id, mediaUrl: data.source_url };
+        };
+        
+        const uploadResults = await Promise.allSettled(uploadTasks.map(uploadImage));
+        
+        let featuredMediaId = null;
+        const infographicUrlMap = new Map();
+        uploadResults.forEach((result) => {
+            if (result.status === 'fulfilled' && result.value) {
+                addLog(`✅ Image uploaded: ${result.value.filename}`);
+                if (result.value.type === 'featured') featuredMediaId = result.value.mediaId;
+                else if (result.value.type === 'infographic') infographicUrlMap.set(result.value.id, result.value.mediaUrl);
+            } else if (result.status === 'rejected') {
+                addLog(`❌ Upload Error: ${result.reason}`);
+            }
+        });
+
+        let finalPostContent = finalContent;
+        infographicUrlMap.forEach((url, id) => {
+            const placeholderRegex = new RegExp(`<!-- INFOGRAPHIC-PLACEHOLDER-${id} -->`, 'g');
+            const infographic = infographics.find(info => info.id === id);
+            const altText = infographic ? infographic.title : 'Infographic';
+            const imageTag = `<figure class="wp-block-image size-large"><img src="${url}" alt="${altText}"/></figure>`;
+            finalPostContent = finalPostContent.replace(placeholderRegex, imageTag);
+        });
+
+        const resolveTaxonomy = async (endpoint, terms, singularName, pluralName) => {
+            if (!terms || terms.length === 0) return [];
+            const response = await fetch(`${apiUrl}/${endpoint}?per_page=100&_fields=id,name`, { headers: baseHeaders });
+            if (!response.ok) return [];
+            const existingTerms = await response.json();
+            const existingTermsMap = new Map(existingTerms.map(term => [term.name.toLowerCase(), term.id]));
+            return terms.map(termName => existingTermsMap.get(termName.toLowerCase())).filter(Boolean);
+        };
+
+        const [tagIds, categoryIds] = await Promise.all([
+            resolveTaxonomy('tags', tags, 'tag', 'tags'),
+            resolveTaxonomy('categories', categories, 'category', 'categories')
+        ]);
+        
+        const postData = {
+            title: finalTitle,
+            slug: slug,
+            content: finalPostContent,
+            status: 'publish',
+            excerpt: metaDescription,
+            tags: tagIds,
+            categories: categoryIds,
+            ...(featuredMediaId && { featured_media: featuredMediaId })
+        };
+
+        const postEndpoint = postId ? `${apiUrl}/posts/${postId}` : `${apiUrl}/posts`;
+        const wpResponse = await fetch(postEndpoint, { method: 'POST', headers: {...baseHeaders, 'Content-Type': 'application/json'}, body: JSON.stringify(postData) });
+        if (!wpResponse.ok) {
+             const errorData = await wpResponse.json();
+             throw new Error(`WP Error (${wpResponse.status}): ${errorData.message}`);
+        }
+        return await wpResponse.json();
+    }, [wpUrl, wpUser, wpPassword, addLog]);
+
     const handlePublishOrUpdate = useCallback(async (mode) => {
         dispatch({ type: 'CLEAR_LOGS' });
         dispatch({ type: 'SET_LOADING_STATE', payload: { publish: true } });
@@ -2694,122 +2808,14 @@ ${existingPostTitles}
             dispatch({ type: 'SET_LOADING_STATE', payload: { publish: false } });
             return;
         }
-
+        
         addLog(isUpdate ? `🔄 Updating existing post (ID: ${postId}) at ${wpUrl}` : `⬆️ Publishing new post to ${wpUrl}`);
         
         try {
-            const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2`;
-            const credentials = btoa(`${wpUser}:${wpPassword}`);
-            const baseHeaders = { 'Authorization': `Basic ${credentials}` };
-
-            addLog('🖼️ Uploading all images concurrently...');
-            
-            const uploadTasks = [];
-            if (featuredImage.base64) {
-                 uploadTasks.push({ type: 'featured', base64: featuredImage.base64, altText: finalTitle, filename: 'featured-image.jpg' });
-            }
-            infographics.forEach((info) => {
-                if (info.base64) {
-                     uploadTasks.push({ type: 'infographic', id: info.id, base64: info.base64, altText: info.title, filename: `infographic-${info.id}.jpg`});
-                }
+            const postResult = await executePublishing({
+                postId, finalTitle, slug, metaDescription, finalContent,
+                tags, categories, featuredImage, infographics
             });
-
-            const uploadImage = async (task) => {
-                const { base64, filename, altText } = task;
-                const blob = await(await fetch(`data:image/jpeg;base64,${base64}`)).blob();
-                const headers = { ...baseHeaders, 'Content-Type': 'image/jpeg', 'Content-Disposition': `attachment; filename="${filename}"`};
-                const res = await fetch(`${apiUrl}/media`, { method: 'POST', headers, body: blob });
-                if (!res.ok) throw new Error(`Failed to upload ${filename}: ${await res.text()}`);
-                const data = await res.json();
-                addLog(`✅ ${filename} uploaded (ID: ${data.id})`);
-                
-                await fetch(`${apiUrl}/media/${data.id}`, {
-                    method: 'POST',
-                    headers: {...baseHeaders, 'Content-Type': 'application/json'},
-                    body: JSON.stringify({ alt_text: altText, title: altText })
-                });
-
-                return { ...task, mediaId: data.id, mediaUrl: data.source_url };
-            };
-            
-            const uploadResults = await Promise.allSettled(uploadTasks.map(uploadImage));
-
-            let featuredMediaId = null;
-            const infographicUrlMap = new Map();
-            uploadResults.forEach((result) => {
-                if (result.status === 'fulfilled' && result.value) {
-                    if (result.value.type === 'featured') {
-                        featuredMediaId = result.value.mediaId;
-                    } else if (result.value.type === 'infographic') {
-                        infographicUrlMap.set(result.value.id, result.value.mediaUrl);
-                    }
-                } else if (result.status === 'rejected') {
-                    addLog(`❌ Upload Error: ${result.reason}`);
-                }
-            });
-            addLog('✅ All images uploaded.');
-
-            let finalPostContent = finalContent;
-            infographicUrlMap.forEach((url, id) => {
-                const placeholderRegex = new RegExp(`<!-- INFOGRAPHIC-PLACEHOLDER-${id} -->`, 'g');
-                const infographic = infographics.find(info => info.id === id);
-                const altText = infographic ? infographic.title : 'Infographic';
-                const imageTag = `<figure class="wp-block-image size-large"><img src="${url}" alt="${altText}"/></figure>`;
-                finalPostContent = finalPostContent.replace(placeholderRegex, imageTag);
-            });
-             addLog('✅ Content updated with final image URLs.');
-
-            const resolveTaxonomy = async (endpoint, terms, singularName, pluralName) => {
-                if (!terms || terms.length === 0) return [];
-                addLog(`🏷️ Resolving existing ${pluralName}...`);
-
-                const response = await fetch(`${apiUrl}/${endpoint}?per_page=100&_fields=id,name`, { headers: baseHeaders });
-                if (!response.ok) {
-                    addLog(`⚠️ Could not fetch existing ${pluralName}. Skipping taxonomy assignment.`);
-                    return [];
-                }
-                const existingTerms = await response.json();
-                const existingTermsMap = new Map(existingTerms.map(term => [term.name.toLowerCase(), term.id]));
-
-                const termIds = [];
-                for (const termName of terms) {
-                    const termId = existingTermsMap.get(termName.toLowerCase());
-                    if (termId) {
-                        termIds.push(termId);
-                    } else {
-                        addLog(`⚠️ Skipping non-existent ${singularName}: "${termName}". Please create it in WordPress first if needed.`);
-                    }
-                }
-                
-                addLog(`Found ${termIds.length} matching ${pluralName}.`);
-                return termIds;
-            };
-
-            const [tagIds, categoryIds] = await Promise.all([
-                resolveTaxonomy('tags', tags, 'tag', 'tags'),
-                resolveTaxonomy('categories', categories, 'category', 'categories')
-            ]);
-            addLog('✅ Taxonomy resolved.');
-            
-            addLog(isUpdate ? `🚀 Applying updates to post...` : '🚀 Publishing post...');
-            const postData = {
-                title: finalTitle,
-                slug: slug,
-                content: finalPostContent,
-                status: 'publish',
-                excerpt: metaDescription,
-                tags: tagIds,
-                categories: categoryIds,
-                ...(featuredMediaId && { featured_media: featuredMediaId })
-            };
-
-            const postEndpoint = isUpdate ? `${apiUrl}/posts/${postId}` : `${apiUrl}/posts`;
-            const wpResponse = await fetch(postEndpoint, { method: 'POST', headers: {...baseHeaders, 'Content-Type': 'application/json'}, body: JSON.stringify(postData) });
-            if (!wpResponse.ok) {
-                 const errorData = await wpResponse.json();
-                 throw new Error(`WP Error (${wpResponse.status}): ${errorData.message}`);
-            }
-            const postResult = await wpResponse.json();
             const resultAction = isUpdate ? 'updated' : 'published';
 
             addLog(`🎉 Successfully ${resultAction}!`);
@@ -2826,7 +2832,7 @@ ${existingPostTitles}
         } finally {
             dispatch({ type: 'SET_LOADING_STATE', payload: { publish: false } });
         }
-    }, [wpUrl, wpUser, wpPassword, finalTitle, slug, metaDescription, finalContent, tags, categories, featuredImage, infographics, state.duplicateInfo, state.postToUpdate, addLog]);
+    }, [executePublishing, finalTitle, slug, metaDescription, finalContent, tags, categories, featuredImage, infographics, state.duplicateInfo, state.postToUpdate, addLog]);
 
      // New and modified handlers for cluster features
     const fetchWpContent = useCallback(async (postId) => {
@@ -2851,271 +2857,297 @@ ${existingPostTitles}
 
         dispatch({ type: 'CLEAR_LOGS' });
         dispatch({ type: 'UPDATE_FIELD', payload: { field: 'postToUpdate', value: post.id } });
-        addLog(`🚀 Preparing to optimize post: "${post.title.rendered}"`);
+        addLog(`⏳ Preparing to optimize existing cluster post: "${postTitle}"`);
         
         try {
             const content = await fetchWpContent(post.id);
-            await handleGenerateContent(content);
+            addLog(`✅ Content fetched for "${postTitle}". Starting optimization...`);
+            dispatch({ type: 'UPDATE_FIELD', payload: { field: 'rawContent', value: content } });
+            // Using a timeout to allow state to update before calling the generation logic
+            setTimeout(() => {
+                handleGenerateContent(content);
+            }, 0);
+
         } catch (error) {
-            addLog(`❌ Error preparing optimization: ${error.message}`);
-            dispatch({ type: 'SET_LOADING_STATE', payload: { content: false } });
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            addLog(`❌ Error preparing cluster post for optimization: ${errorMessage}`);
             dispatch({ type: 'CLEAR_UPDATE_SELECTION' });
         }
-    }, [state.wpPosts, fetchWpContent, handleGenerateContent, addLog]);
-
-    const handleProcessFullCluster = useCallback(async () => {
-        if (!clusterPlan) return;
-        
-        const allPostsInPlan = [clusterPlan.pillar, ...clusterPlan.clusters];
-        const jobs = allPostsInPlan.map(p => ({
-            id: Date.now() + Math.random(),
-            title: p.title,
-            status: p.status, // 'new' or 'existing'
-            result: null
-        }));
-
-        dispatch({ type: 'START_BATCH_GENERATION', payload: jobs });
-        
-        const processClusterJob = async (job) => {
-            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: 'processing' }});
-            addLog(`⚙️ Processing cluster job: "${job.title}"`);
-            
-            const clusterContext = { plan: clusterPlan, currentTitle: job.title };
-            let contentToProcess = job.title;
-            let isUpdate = false;
-
-            if (job.status === 'existing') {
-                const post = state.wpPosts.find(p => p.title.rendered === job.title);
-                if (!post) throw new Error(`Could not find existing post: ${job.title}`);
-                contentToProcess = await fetchWpContent(post.id);
-                isUpdate = true;
-            }
-
-            const result = await generatePostLogic(contentToProcess, isUpdate, clusterContext);
-            const { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = result;
-            
-            return {
-                finalTitle: title,
-                finalContent: content,
-                slug, metaDescription, tags, categories,
-                featuredImage: { prompt: featuredImagePrompt, base64: '' },
-                infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '' })),
-            };
-        };
-
-        const onProgress = ({ item: job, result, success, error }: { item: any, result?: any, error?: Error, success: boolean }) => {
-            const finalResult = success ? result : error?.message || 'An unknown error occurred.';
-            addLog(success ? `✅ Finished cluster article: "${job.title}"` : `❌ Failed cluster article: "${job.title}" - ${finalResult}`);
-            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: success ? 'done' : 'error', result: finalResult } });
-        };
-        
-        await processConcurrentPromiseQueue(jobs, processClusterJob, onProgress, 3);
-        addLog(`🎉 Full cluster processing complete.`);
-        dispatch({ type: 'FINISH_BATCH_GENERATION' });
-    }, [clusterPlan, state.wpPosts, fetchWpContent, generatePostLogic, addLog]);
+    }, [state.wpPosts, addLog, fetchWpContent, handleGenerateContent]);
 
     const handleDiscoverClusters = useCallback(async () => {
         if (state.wpPosts.length === 0) {
-            addLog('❌ Cannot discover clusters without posts. Please load them first.');
+            addLog('❌ Cannot discover clusters. Please load your published posts first.');
             return;
         }
-        dispatch({ type: 'CLEAR_LOGS' });
         dispatch({ type: 'START_DISCOVER_CLUSTERS' });
-        addLog('🤖 Analyzing your content library for cluster opportunities...');
-
+        addLog(`🤖 Analyzing ${state.wpPosts.length} posts to discover cluster opportunities...`);
         try {
             const apiKey = apiKeys[aiProvider];
-            if (!apiKey) throw new Error(`${aiProvider} API key is required.`);
-            const allPostTitles = state.wpPosts.map(p => p.title.rendered);
-            
-            const prompt = `You are a world-class SEO content strategist. Your task is to analyze a list of blog post titles and identify the top 4 most impactful topical cluster opportunities.
+            if (!apiKey) throw new Error(`${aiProvider} API Key is required.`);
+
+            const existingPostTitles = state.wpPosts.map(p => p.title.rendered).join('\n');
+
+            const prompt = `You are a world-class SEO strategist. Your task is to analyze a list of existing blog post titles and identify the top 4 most promising topical cluster opportunities.
 
 ### INSTRUCTIONS:
-1.  **Analyze Holistically**: Review the entire list of titles to understand the website's main areas of expertise and identify thematic groupings.
-2.  **Identify High-Potential Clusters**: A good cluster has a strong, broad "pillar" topic and can be supported by multiple specific "cluster" posts. Look for groups of related articles that could be formalized into a powerful cluster to boost authority.
-3.  **Define the Cluster Topic**: For each of the top 4 opportunities, define a clear and concise core topic (e.g., "Content Marketing for Startups").
-4.  **Provide a Rationale**: Briefly explain *why* this is a strong cluster opportunity for this specific website. Mention how it connects existing content and where the potential for new content lies.
-5.  **List Supporting Posts**: Identify 3-5 existing article titles from the provided list that would directly support this cluster topic. This is crucial for grounding your suggestion in the site's current reality.
-6.  **JSON Output**: Your response MUST be ONLY a raw JSON object with a root key "opportunities". Do not include any other text, explanations, or markdown.
+1.  **Analyze Holistically**: Review the entire list of titles to understand the site's main themes and areas of expertise.
+2.  **Identify Potential Hubs**: Look for groups of related articles that could form a cluster around a central, high-value "pillar" topic.
+3.  **Define the Core Topic**: For each opportunity, define a concise and compelling core topic for the cluster (e.g., "Content Marketing Strategy").
+4.  **Write a Strategic Rationale**: Explain *why* this is a strong cluster opportunity. Mention the existing content that supports it and the potential to build authority.
+5.  **List Supporting Posts**: List the exact titles of 3-5 existing posts that would be part of this cluster.
+6.  **Output in JSON**: Your response MUST be ONLY a raw JSON object.
 
 ### REQUIRED JSON OUTPUT FORMAT:
-{
-  "opportunities": [
-    {
-      "topic": "The core topic for the cluster",
-      "rationale": "A 2-3 sentence explanation of why this is a strategic cluster.",
-      "supportingPosts": [
-        "Exact title of an existing post that fits here",
-        "Another exact title of a supporting post"
-      ]
-    }
-  ]
-}
+The root of the object must be a key named "clusters" which contains an array of 4 objects. Each object must have:
+-   \`topic\`: (String) The core topic of the suggested cluster.
+-   \`rationale\`: (String) The strategic reason this is a good cluster to build.
+-   \`supportingPosts\`: (Array of strings) A list of 3-5 existing article titles that support this cluster.
 
 ### EXISTING ARTICLE TITLES FOR ANALYSIS:
 ---
-${allPostTitles.join('\n')}
----
-`;
+${existingPostTitles}
+---`;
+            
             let responseText = '';
             if (aiProvider === 'gemini') {
-                const ai = new GoogleGenAI({ apiKey });
-                const responseSchema = {
+                 const ai = new GoogleGenAI({ apiKey });
+                 const clusterSchema = {
                     type: Type.OBJECT,
                     properties: {
-                        opportunities: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    topic: { type: Type.STRING },
-                                    rationale: { type: Type.STRING },
-                                    supportingPosts: { type: Type.ARRAY, items: { type: Type.STRING } }
-                                },
-                                required: ['topic', 'rationale', 'supportingPosts']
-                            }
-                        }
+                        topic: { type: Type.STRING },
+                        rationale: { type: Type.STRING },
+                        supportingPosts: { type: Type.ARRAY, items: { type: Type.STRING } },
                     },
-                    required: ['opportunities']
-                };
-                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json', responseSchema } });
-                responseText = response.text;
-            } else { // Fallback for OpenAI/OpenRouter
-                const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
-                if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
-                const openai = new OpenAI(clientOptions);
-                const model = aiProvider === 'openai' ? 'gpt-4o' : (openRouterModel || 'openai/gpt-4o');
-                const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } });
-                responseText = response.choices[0].message.content;
+                    required: ['topic', 'rationale', 'supportingPosts'],
+                 };
+                 const responseSchema = { 
+                    type: Type.OBJECT,
+                    properties: {
+                        clusters: { type: Type.ARRAY, items: clusterSchema },
+                    },
+                    required: ['clusters']
+                 };
+                 const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json', responseSchema } });
+                 responseText = response.text;
+            } else {
+                 const clientOptions: any = { apiKey, dangerouslyAllowBrowser: true };
+                 if (aiProvider === 'openrouter') clientOptions.baseURL = "https://openrouter.ai/api/v1";
+                 const openai = new OpenAI(clientOptions);
+                 const model = aiProvider === 'openai' ? 'gpt-4o' : (openRouterModel || 'openai/gpt-4o');
+                 const response = await openai.chat.completions.create({ model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } });
+                 responseText = response.choices[0].message.content;
             }
 
-            const parsed = JSON.parse(cleanAiResponse(responseText));
-            if (!parsed.opportunities || !Array.isArray(parsed.opportunities)) {
-                throw new Error("AI returned data in an unexpected format.");
+            const parsedJson = JSON.parse(cleanAiResponse(responseText));
+            const clusters = parsedJson.clusters;
+            
+            if (!Array.isArray(clusters)) {
+                throw new Error("AI response was not in the expected format (an array of clusters).");
             }
-            dispatch({ type: 'SET_SUGGESTED_CLUSTERS', payload: parsed.opportunities });
-            addLog(`✅ Successfully identified ${parsed.opportunities.length} potential clusters.`);
+            
+            dispatch({ type: 'SET_SUGGESTED_CLUSTERS', payload: clusters });
+            addLog(`✅ Successfully identified ${clusters.length} potential cluster opportunities.`);
 
         } catch (error) {
-            addLog(`❌ Error discovering clusters: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            addLog(`❌ Error discovering clusters: ${errorMessage}`);
         } finally {
             dispatch({ type: 'FINISH_DISCOVER_CLUSTERS' });
         }
-    }, [aiProvider, apiKeys, openRouterModel, state.wpPosts, addLog]);
+    }, [aiProvider, apiKeys, openRouterModel, addLog, state.wpPosts]);
 
     const handleBulkUpdate = useCallback(async () => {
-        const { selectedPosts, wpPosts } = state;
-        if (selectedPosts.length === 0) return;
-
-        const postsToUpdate = wpPosts.filter(p => selectedPosts.includes(p.id));
+        if (state.selectedPosts.length === 0) return;
+        
+        const postsToUpdate = state.wpPosts.filter(p => state.selectedPosts.includes(p.id));
+        addLog(`🚀 Starting bulk update for ${postsToUpdate.length} posts.`);
 
         const jobs = postsToUpdate.map(post => ({
             id: post.id,
             title: post.title.rendered,
             status: 'queued',
             result: null,
-            postLink: post.link,
+            isUpdate: true, // Mark this as an update job
         }));
 
         dispatch({ type: 'START_BATCH_GENERATION', payload: jobs });
-        dispatch({ type: 'TOGGLE_MULTI_SELECT_MODE' });
 
-        const workspace = document.getElementById('workspace-container');
-        if(workspace) {
-            workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        const processSingleUpdate = async (job) => {
+        const updateSinglePost = async (job) => {
             dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: 'processing' } });
-            addLog(`🤖 Starting bulk update for: "${job.title}"`);
+            addLog(`⚙️ Processing bulk update for: "${job.title}"`);
             
+            // 1. Fetch content
             const content = await fetchWpContent(job.id);
-            const result = await generatePostLogic(content, true);
-            const { title, content: finalContent, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = result;
-            
+
+            // 2. Generate updated content
+            const result = await generatePostLogic(content, true); // true for isUpdate
+            const { title, content: newContent, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = result;
+
             return {
                 content: {
                     finalTitle: title,
-                    finalContent,
+                    finalContent: newContent,
                     slug, metaDescription, tags, categories,
                     featuredImage: { prompt: featuredImagePrompt, base64: '' },
                     infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '' })),
                 },
                 postId: job.id,
-                postLink: job.postLink,
+                postLink: postsToUpdate.find(p => p.id === job.id)?.link,
             };
         };
         
-        const onProgress = ({ item: job, result, success, error }: {
-            item: (typeof jobs)[0];
-            result?: Awaited<ReturnType<typeof processSingleUpdate>>;
-            index: number;
-            success: boolean;
-            error?: Error;
-        }) => {
+        const onProgress = ({ item: job, result, success, error }: { item: typeof jobs[0], result?: Awaited<ReturnType<typeof updateSinglePost>>, error?: Error, index: number, success: boolean }) => {
             const finalResult = success ? result : error?.message || 'An unknown error occurred.';
             addLog(success ? `✅ Bulk update finished: "${job.title}"` : `❌ Bulk update failed: "${job.title}" - ${finalResult}`);
-            dispatch({
-                type: 'UPDATE_BATCH_JOB_STATUS',
-                payload: { id: job.id, status: success ? 'done' : 'error', result: finalResult }
-            });
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: success ? 'done' : 'error', result: finalResult } });
         };
 
-        await processConcurrentPromiseQueue(jobs, processSingleUpdate, onProgress, 3);
+        await processConcurrentPromiseQueue(jobs, updateSinglePost, onProgress, 3);
         
-        addLog(`🎉 Bulk update complete.`);
+        addLog('🎉 Bulk update generation complete. Review and publish items from the Batch Progress view.');
         dispatch({ type: 'FINISH_BATCH_GENERATION' });
-    }, [state.selectedPosts, state.wpPosts, addLog, fetchWpContent, generatePostLogic]);
+        dispatch({ type: 'TOGGLE_MULTI_SELECT_MODE' }); // Exit multi-select mode after starting
 
+    }, [state.selectedPosts, state.wpPosts, fetchWpContent, generatePostLogic, addLog]);
 
-    const renderStep = () => {
-        switch (state.step) {
-            case 1:
-                return <ConfigStep state={state} dispatch={dispatch} onFetchSitemap={handleFetchSitemap} onValidateKey={handleKeyValidation} onVerifyWpConnection={handleVerifyWpConnection} />;
-            case 2:
-                return <ContentStep state={state} dispatch={dispatch} onGenerateContent={handleGenerateContent} onFetchWpPosts={handleFetchWpPosts} onAnalyzeAndSelect={handleAnalyzeAndSelect} onGeneratePostIdeas={handleGeneratePostIdeas} onGenerateBatch={handleGenerateBatch} onLoadBatchResultForReview={handleLoadBatchResultForReview} onGenerateClusterPlan={handleGenerateClusterPlan} onGenerateClusterArticles={handleGenerateClusterArticles} onProcessFullCluster={handleProcessFullCluster} onDiscoverClusters={handleDiscoverClusters} onOptimizeClusterPost={handleOptimizeClusterPost} onBulkUpdate={handleBulkUpdate} />;
-            case 3:
-                return <ReviewPublishStep state={state} dispatch={dispatch} onPostAction={handlePublishOrUpdate} onImageRegen={handleImageRegen} />;
-            default:
-                return <div>Invalid Step</div>;
-        }
-    }
-    
-    const canNavigate = state.wpConnectionStatus === 'success' && state.keyStatus[state.aiProvider] === 'valid';
-    const handleNavigation = (step) => dispatch({ type: 'SET_STEP', payload: step });
+    const handleProcessFullCluster = useCallback(async () => {
+        if (!clusterPlan) return;
+        
+        const allClusterItems = [clusterPlan.pillar, ...clusterPlan.clusters];
+        addLog(`🚀 Processing full cluster for "${clusterTopic}" with ${allClusterItems.length} articles.`);
+
+        const jobs = allClusterItems.map(item => {
+            const existingPost = item.status === 'existing' ? state.wpPosts.find(p => p.title.rendered === item.title) : null;
+            return {
+                id: existingPost ? existingPost.id : Date.now() + Math.random(),
+                title: item.title,
+                status: 'queued',
+                result: null,
+                isUpdate: item.status === 'existing',
+                postLink: existingPost ? existingPost.link : null,
+            };
+        });
+
+        dispatch({ type: 'START_BATCH_GENERATION', payload: jobs });
+        
+        const processSingleClusterItem = async (job) => {
+             dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: 'processing' } });
+             addLog(`⚙️ Processing cluster item: "${job.title}"`);
+
+             const contentToProcess = job.isUpdate ? await fetchWpContent(job.id) : job.title;
+             
+             const result = await generatePostLogic(contentToProcess, job.isUpdate, { plan: clusterPlan, currentTitle: job.title });
+             const { title, content, slug, metaDescription, tags, categories, infographics: infographicBlueprints, featuredImagePrompt } = result;
+             
+             return {
+                content: {
+                    finalTitle: title,
+                    finalContent: content,
+                    slug, metaDescription, tags, categories,
+                    featuredImage: { prompt: featuredImagePrompt, base64: '' },
+                    infographics: (infographicBlueprints || []).map(bp => ({ ...bp, base64: '' })),
+                },
+                postId: job.isUpdate ? job.id : null,
+                postLink: job.postLink,
+             };
+        };
+        
+        const onProgress = ({ item: job, result, success, error }: { item: typeof jobs[0], result?: any, error?: Error, index: number, success: boolean }) => {
+            const finalResult = success ? result : error?.message || 'An unknown error occurred.';
+            addLog(success ? `✅ Finished cluster item: "${job.title}"` : `❌ Failed cluster item: "${job.title}" - ${finalResult}`);
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: success ? 'done' : 'error', result: finalResult } });
+        };
+
+        await processConcurrentPromiseQueue(jobs, processSingleClusterItem, onProgress, 3);
+        
+        addLog('🎉 Full cluster processing complete. Review and publish items from the Batch Progress view.');
+        dispatch({ type: 'FINISH_BATCH_GENERATION' });
+
+    }, [clusterPlan, clusterTopic, state.wpPosts, fetchWpContent, generatePostLogic, addLog]);
+
+    const handleBulkPublish = useCallback(async () => {
+        const jobsToPublish = state.batchJobs.filter(j => j.status === 'done' && j.result);
+        if (jobsToPublish.length === 0) return;
+
+        addLog(`🚀 Starting bulk publish for ${jobsToPublish.length} posts.`);
+        dispatch({ type: 'SET_LOADING_STATE', payload: { bulkPublish: true } });
+
+        const publishSinglePost = async (job) => {
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { id: job.id, status: 'publishing' }});
+            addLog(`⬆️ Publishing: "${job.title}"`);
+            
+            // The job result contains the content payload and postId if it's an update
+            const { content, postId } = job.result;
+            
+            // First, generate and upload images for this post
+            const imageTasks = [
+                { type: 'featured', prompt: content.featuredImage.prompt },
+                ...content.infographics.map(info => ({ type: 'infographic', id: info.id, prompt: info.imagePrompt }))
+            ].filter(task => task.prompt);
+
+            const imagePromises = imageTasks.map(task => 
+                handleGenerateImage(task.prompt).then(base64 => ({...task, base64, status: 'fulfilled'}))
+                                                .catch(error => ({...task, error, status: 'rejected'}))
+            );
+            const imageResults = await Promise.all(imagePromises);
+
+            const finalPayload = { ...content };
+            imageResults.forEach(result => {
+                if (result.status === 'fulfilled') {
+                    if (result.type === 'featured') {
+                        finalPayload.featuredImage = { ...finalPayload.featuredImage, base64: result.base64 };
+                    } else {
+                        const infoIndex = finalPayload.infographics.findIndex(info => info.id === result.id);
+                        if (infoIndex !== -1) {
+                            finalPayload.infographics[infoIndex].base64 = result.base64;
+                        }
+                    }
+                }
+            });
+
+            // Now, execute the publishing logic
+            const wpPostResult = await executePublishing({ postId, ...finalPayload });
+
+            // Mark original post as updated if it was an update job
+            if (postId) {
+                dispatch({ type: 'MARK_POST_AS_UPDATED', payload: { id: postId } });
+            }
+
+            return { ...job.result, postLink: wpPostResult.link };
+        };
+
+        const onProgress = ({ item: job, result, success, error }: { item: typeof jobsToPublish[0], result?: any, error?: Error, index: number, success: boolean }) => {
+            const finalResult = success ? result : error?.message || 'An unknown error occurred.';
+            addLog(success ? `✅ Published: "${job.title}"` : `❌ Publish Failed: "${job.title}" - ${finalResult}`);
+            dispatch({ type: 'UPDATE_BATCH_JOB_STATUS', payload: { 
+                id: job.id, 
+                status: success ? 'published' : 'publish_error', 
+                result: finalResult 
+            } });
+        };
+
+        await processConcurrentPromiseQueue(jobsToPublish, publishSinglePost, onProgress, 2); // Lower concurrency for publishing to be safe with WP REST API
+
+        addLog(`🎉 Bulk publishing complete.`);
+        dispatch({ type: 'SET_LOADING_STATE', payload: { bulkPublish: false } });
+
+    }, [state.batchJobs, addLog, executePublishing, handleGenerateImage]);
 
     return (
-        <div className="app-container">
-            <Sidebar currentStep={state.step} onNavigate={handleNavigation} canNavigate={canNavigate} />
-            <main className="main-content">
-                <ErrorBoundary>
-                    {renderStep()}
-                </ErrorBoundary>
-
-                 {state.logs.length > 0 && (
-                    <div className="status-container">
-                        <ul className="status-log" aria-live="polite">
-                            {state.logs.map((log, index) => <li key={index}>{log}</li>)}
-                        </ul>
-                    </div>
-                )}
-
-                {state.result && (
-                    <div className={`result ${state.result.type}`} role="alert" dangerouslySetInnerHTML={{ __html: state.result.message }}>
-                    </div>
-                )}
-            </main>
-             <BottomNav currentStep={state.step} onNavigate={handleNavigation} canNavigate={canNavigate} />
-        </div>
+        <ErrorBoundary>
+            <div className="app-container">
+                <Sidebar currentStep={state.step} onNavigate={(step) => dispatch({ type: 'SET_STEP', payload: step })} canNavigate={!Object.values(state.loading).some(Boolean)} />
+                <main className="main-content">
+                    {state.step === 1 && <ConfigStep state={state} dispatch={dispatch} onFetchSitemap={handleFetchSitemap} onValidateKey={handleKeyValidation} onVerifyWpConnection={handleVerifyWpConnection} />}
+                    {state.step === 2 && <ContentStep state={state} dispatch={dispatch} onGenerateContent={handleGenerateContent} onFetchWpPosts={handleFetchWpPosts} onAnalyzeAndSelect={handleAnalyzeAndSelect} onGeneratePostIdeas={handleGeneratePostIdeas} onGenerateBatch={handleGenerateBatch} onLoadBatchResultForReview={handleLoadBatchResultForReview} onGenerateClusterPlan={handleGenerateClusterPlan} onGenerateClusterArticles={handleGenerateClusterArticles} onProcessFullCluster={handleProcessFullCluster} onDiscoverClusters={handleDiscoverClusters} onOptimizeClusterPost={handleOptimizeClusterPost} onBulkUpdate={handleBulkUpdate} onBulkPublish={handleBulkPublish} />}
+                    {state.step === 3 && <ReviewPublishStep state={state} dispatch={dispatch} onPostAction={handlePublishOrUpdate} onImageRegen={handleImageRegen}/>}
+                </main>
+                <BottomNav currentStep={state.step} onNavigate={(step) => dispatch({ type: 'SET_STEP', payload: step })} canNavigate={!Object.values(state.loading).some(Boolean)} />
+            </div>
+        </ErrorBoundary>
     );
 };
 
-const rootElement = document.getElementById('root');
-if (rootElement) {
-    const root = ReactDOM.createRoot(rootElement);
-    root.render(
-        <React.StrictMode>
-            <App />
-        </React.StrictMode>
-    );
-}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
