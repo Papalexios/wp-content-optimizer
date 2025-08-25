@@ -644,7 +644,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
     };
 
     const handleBatchItemReview = (job) => {
-        onLoadBatchResultForReview(job.result);
+        onLoadBatchResultForReview(job);
     };
     
     const getPostStatus = (post) => {
@@ -1472,6 +1472,7 @@ const initialState = {
     postIdeas: [],
     batchTopics: '',
     batchJobs: [], // { id, title, status, result }
+    currentBatchJobId: null, // To track which batch job is being reviewed
     wpConnectionStatus: 'idle', // idle, verifying, success, error
     wpConnectionError: '',
     wpUserRoles: [],
@@ -1610,13 +1611,14 @@ function appReducer(state, action) {
                 step: 3,
                 result: null,
                 logs: [],
-                ...action.payload.content,
-                publishMode: action.payload.postId ? 'update' : 'publish',
-                postToUpdate: action.payload.postId || null,
+                ...action.payload.result.content,
+                publishMode: action.payload.result.postId ? 'update' : 'publish',
+                postToUpdate: action.payload.result.postId || null,
                 duplicateInfo: {
-                    similarUrl: action.payload.postLink || null,
-                    postId: action.payload.postId || null,
+                    similarUrl: action.payload.result.postLink || null,
+                    postId: action.payload.result.postId || null,
                 },
+                currentBatchJobId: action.payload.jobId,
             };
         case 'SET_CLUSTER_TOPIC':
             return { ...state, clusterTopic: action.payload };
@@ -1670,7 +1672,7 @@ function appReducer(state, action) {
                 postIdeas: [],
                 clusterTopic: '',
                 clusterPlan: null,
-                batchJobs: [],
+                currentBatchJobId: null,
             };
         default:
             throw new Error(`Unhandled action type: ${action.type}`);
@@ -2711,8 +2713,15 @@ ${existingPostTitles}
 
     }, [clusterPlan, generatePostLogic, addLog]);
 
-    const handleLoadBatchResultForReview = useCallback((result) => {
-        dispatch({ type: 'LOAD_BATCH_RESULT_FOR_REVIEW', payload: result });
+    const handleLoadBatchResultForReview = useCallback((job) => {
+        const result = job.result;
+        dispatch({
+            type: 'LOAD_BATCH_RESULT_FOR_REVIEW',
+            payload: {
+                result: result,
+                jobId: job.id
+            }
+        });
         addLog('📝 Loaded result for review. Generating images...');
         
         const imageTasks = [
@@ -2725,7 +2734,6 @@ ${existingPostTitles}
                 handleImageRegen(task.type, task.id, task.prompt);
             }
         });
-
     }, [handleImageRegen, addLog]);
     
     const executePublishing = useCallback(async (publishPayload) => {
@@ -2851,6 +2859,22 @@ ${existingPostTitles}
             if (isUpdate) {
                 dispatch({ type: 'MARK_POST_AS_UPDATED', payload: { id: postId } });
             }
+            
+            if (state.currentBatchJobId) {
+                const currentJob = state.batchJobs.find(j => j.id === state.currentBatchJobId);
+                dispatch({
+                    type: 'UPDATE_BATCH_JOB_STATUS',
+                    payload: {
+                        id: state.currentBatchJobId,
+                        status: 'published',
+                        result: {
+                            ...currentJob?.result,
+                            postLink: postResult.link
+                        }
+                    }
+                });
+            }
+
             dispatch({ type: 'SET_RESULT', payload: { type: 'success', message: `Post ${resultAction}! <a href="${postResult.link}" target="_blank" rel="noopener noreferrer">View Post</a>` }});
 
         } catch (error) {
@@ -2861,7 +2885,7 @@ ${existingPostTitles}
         } finally {
             dispatch({ type: 'SET_LOADING_STATE', payload: { publish: false } });
         }
-    }, [executePublishing, finalTitle, slug, metaDescription, finalContent, tags, categories, featuredImage, infographics, state.duplicateInfo, state.postToUpdate, addLog]);
+    }, [executePublishing, finalTitle, slug, metaDescription, finalContent, tags, categories, featuredImage, infographics, state.duplicateInfo, state.postToUpdate, state.currentBatchJobId, state.batchJobs, addLog]);
 
      // New and modified handlers for cluster features
     const fetchWpContent = useCallback(async (postId) => {
