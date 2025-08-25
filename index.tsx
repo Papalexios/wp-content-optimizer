@@ -249,7 +249,7 @@ const PromoBanner = () => (
 
 
 const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWpConnection }) => {
-    const { wpUrl, wpUser, wpPassword, sitemapUrl, urlLimit, loading, aiProvider, apiKeys, openRouterModel, keyStatus, wpConnectionStatus, wpConnectionError, wpUserRoles } = state;
+    const { wpUrl, wpUser, wpPassword, sitemapUrl, loading, aiProvider, apiKeys, openRouterModel, keyStatus, wpConnectionStatus, wpConnectionError, wpUserRoles } = state;
     const isSitemapConfigValid = useMemo(() => sitemapUrl && sitemapUrl.trim() !== '', [sitemapUrl]);
     
     const isApiKeyValid = useMemo(() => {
@@ -272,7 +272,6 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
                     if (typeof config.wpUrl === 'string') payload.wpUrl = config.wpUrl;
                     if (typeof config.wpUser === 'string') payload.wpUser = config.wpUser;
                     if (typeof config.sitemapUrl === 'string') payload.sitemapUrl = config.sitemapUrl;
-                    if (typeof config.urlLimit === 'number') payload.urlLimit = config.urlLimit;
                     if (typeof config.aiProvider === 'string' && ['gemini', 'openai', 'claude', 'openrouter'].includes(config.aiProvider)) payload.aiProvider = config.aiProvider;
                     if (config.apiKeys && typeof config.apiKeys === 'object') {
                         payload.apiKeys = {
@@ -302,10 +301,10 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
 
     useEffect(() => {
         if (saveConfig) {
-            const configToSave = { wpUrl, wpUser, sitemapUrl, urlLimit, aiProvider, apiKeys, openRouterModel };
+            const configToSave = { wpUrl, wpUser, sitemapUrl, aiProvider, apiKeys, openRouterModel };
             debouncedSave(configToSave);
         }
-    }, [wpUrl, wpUser, sitemapUrl, urlLimit, aiProvider, apiKeys, openRouterModel, saveConfig, debouncedSave]);
+    }, [wpUrl, wpUser, sitemapUrl, aiProvider, apiKeys, openRouterModel, saveConfig, debouncedSave]);
 
     const handleSaveToggle = (e) => {
         const checked = e.target.checked;
@@ -444,10 +443,6 @@ const ConfigStep = ({ state, dispatch, onFetchSitemap, onValidateKey, onVerifyWp
                  <div className="form-group">
                     <label htmlFor="sitemapUrl">Sitemap URL (or Sitemap Index URL)</label>
                     <input type="url" id="sitemapUrl" value={sitemapUrl} onChange={handleChange} placeholder="https://affiliatemarketingforsuccess.com/sitemap.xml" required />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="urlLimit">Max URLs to process from sitemap</label>
-                    <input type="number" id="urlLimit" value={urlLimit} onChange={e => dispatch({type: 'UPDATE_FIELD', payload: {field: 'urlLimit', value: parseInt(e.target.value, 10) }})} />
                 </div>
             </fieldset>
 
@@ -705,7 +700,7 @@ const ContentStep = ({ state, dispatch, onGenerateContent, onFetchWpPosts, onAna
                 }
 
                 if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
-                if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+                if (aValue < bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
                 return 0;
             });
         }
@@ -1456,7 +1451,6 @@ const initialState = {
     wpUser: '',
     wpPassword: '',
     sitemapUrl: 'https://affiliatemarketingforsuccess.com/sitemap.xml',
-    urlLimit: 500,
     fetchedUrls: [],
     rawContent: '',
     finalTitle: '',
@@ -1507,7 +1501,7 @@ function appReducer(state, action) {
         case 'RESET_CONFIG':
             return {
                 ...state,
-                wpUrl: '', wpUser: '', wpPassword: '', sitemapUrl: 'https://affiliatemarketingforsuccess.com/sitemap.xml', urlLimit: 500,
+                wpUrl: '', wpUser: '', wpPassword: '', sitemapUrl: 'https://affiliatemarketingforsuccess.com/sitemap.xml',
                 aiProvider: 'gemini', apiKeys: { gemini: '', openai: '', claude: '', openrouter: '' },
                 keyStatus: { gemini: 'idle', openai: 'idle', claude: 'idle', openrouter: 'idle' },
                 wpConnectionStatus: 'idle', wpConnectionError: '', wpUserRoles: [], wpCategories: [],
@@ -1688,7 +1682,7 @@ function appReducer(state, action) {
 const App = () => {
     const [state, dispatch] = useReducer(appReducer, initialState);
     const {
-        sitemapUrl, urlLimit, aiProvider, apiKeys, openRouterModel, rawContent,
+        sitemapUrl, aiProvider, apiKeys, openRouterModel, rawContent,
         fetchedUrls, wpUrl, wpUser, wpPassword, finalTitle, slug, finalContent,
         tags, categories, featuredImage, infographics, metaDescription, clusterPlan, clusterTopic,
         batchTopics
@@ -1772,16 +1766,26 @@ const App = () => {
 
         addLog(`📡 Initializing sitemap fetch from ${sitemapUrl}`);
         try {
-            const allUrls = new Set();
+            const allUrls = new Set<string>();
             const queue = [sitemapUrl];
-            const processedSitemaps = new Set();
+            const processedSitemaps = new Set<string>();
             const CORS_PROXY = 'https://corsproxy.io/?';
+            let initialFetch = true;
 
-            while (queue.length > 0 && allUrls.size < urlLimit) {
+            while (queue.length > 0) {
                 const currentSitemapUrl = queue.shift();
                 if (!currentSitemapUrl || processedSitemaps.has(currentSitemapUrl)) continue;
 
-                addLog(`📄 Fetching ${currentSitemapUrl}...`);
+                const urlObject = new URL(currentSitemapUrl);
+                const sitemapName = urlObject.pathname.split('/').pop() || urlObject.hostname;
+                
+                if (initialFetch) {
+                    addLog(`📄 Fetching initial sitemap: ${sitemapName}...`);
+                    initialFetch = false;
+                } else {
+                    addLog(`➡️ Processing sub-sitemap: ${sitemapName}...`);
+                }
+
                 const proxiedUrl = `${CORS_PROXY}${encodeURIComponent(currentSitemapUrl)}`;
                 
                 const response = await fetch(proxiedUrl);
@@ -1798,17 +1802,23 @@ const App = () => {
                 if (parserError) {
                      throw new Error(`Failed to parse XML from ${currentSitemapUrl}. Error: ${parserError.textContent}`);
                 }
+                
+                const locs = doc.getElementsByTagName('loc');
 
                 if (doc.documentElement.tagName.toLowerCase() === 'sitemapindex') {
-                    addLog('🗂️ Sitemap index detected. Parsing sub-sitemaps.');
-                    const subSitemaps = Array.from(doc.getElementsByTagName('loc')).map(loc => loc.textContent).filter(Boolean);
-                    addLog(`Found ${subSitemaps.length} sub-sitemaps.`);
+                    addLog(`🗂️ Sitemap index detected in ${sitemapName}.`);
+                    const subSitemaps = Array.from(locs).map(loc => loc.textContent).filter(Boolean) as string[];
+                    addLog(`  - Found ${subSitemaps.length} sub-sitemaps to queue.`);
                     queue.push(...subSitemaps);
                 } else {
-                    Array.from(doc.getElementsByTagName('loc')).forEach(loc => {
-                        if (allUrls.size < urlLimit && loc.textContent) allUrls.add(loc.textContent);
+                    let newUrls = 0;
+                    Array.from(locs).forEach(loc => {
+                        if (loc.textContent) {
+                           allUrls.add(loc.textContent);
+                           newUrls++;
+                        }
                     });
-                    addLog(`Found ${doc.getElementsByTagName('loc').length} URLs. Total unique: ${allUrls.size}`);
+                    addLog(`  - Parsed ${newUrls} URLs from ${sitemapName}. Total unique: ${allUrls.size}`);
                 }
             }
 
@@ -1816,7 +1826,7 @@ const App = () => {
             
             const finalUrls = Array.from(allUrls);
             dispatch({ type: 'SET_FETCHED_URLS', payload: finalUrls });
-            addLog(`✅ Finished. ${finalUrls.length} URLs collected.`);
+            addLog(`✅ Finished. ${finalUrls.length} total unique URLs collected.`);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             addLog(`❌ Error: ${errorMessage}`);
@@ -1824,29 +1834,48 @@ const App = () => {
         } finally {
             dispatch({ type: 'SET_LOADING_STATE', payload: { sitemap: false } });
         }
-    }, [sitemapUrl, urlLimit, addLog]);
+    }, [sitemapUrl, addLog]);
 
     const handleFetchWpPosts = useCallback(async () => {
         dispatch({ type: 'CLEAR_LOGS' });
         dispatch({ type: 'SET_LOADING_STATE', payload: { posts: true } });
-        addLog(`📡 Fetching posts from ${wpUrl}...`);
+        addLog(`📡 Fetching all posts from ${wpUrl}...`);
 
         try {
-            const apiUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts?status=publish&per_page=100&_fields=id,title,link,date,modified,_links`;
+            const baseUrl = `${wpUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts?status=publish&per_page=100&_fields=id,title,link,date,modified,_links`;
             const credentials = btoa(`${wpUser}:${wpPassword}`);
             const headers = { 'Authorization': `Basic ${credentials}` };
+            
+            let allPosts = [];
+            let page = 1;
+            let totalPages = 1;
 
-            const response = await fetch(apiUrl, { headers });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`WP Error: ${errorData.message || response.statusText}`);
-            }
+            do {
+                const response = await fetch(`${baseUrl}&page=${page}`, { headers });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`WP Error: ${errorData.message || response.statusText}`);
+                }
+                
+                if (page === 1) {
+                    totalPages = parseInt(response.headers.get('X-WP-TotalPages') || '1', 10);
+                }
+                
+                addLog(`📄 Fetching page ${page} of ${totalPages}...`);
+                const posts = await response.json();
+                
+                if (posts.length === 0) break; // Reached the end
+                
+                allPosts = allPosts.concat(posts);
+                page++;
 
-            const posts = await response.json();
-            posts.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
-            const postsWithStatus = posts.map(p => ({ ...p, status: 'idle', keyword: '', updatedInSession: false }));
+            } while (page <= totalPages);
+            
+            allPosts.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+            const postsWithStatus = allPosts.map(p => ({ ...p, status: 'idle', keyword: '', updatedInSession: false }));
             dispatch({ type: 'SET_WP_POSTS', payload: postsWithStatus });
-            addLog(`✅ Found ${posts.length} published posts. Sorted by most recently modified first.`);
+            addLog(`✅ Found ${allPosts.length} published posts. Sorted by most recently modified first.`);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             addLog(`❌ Error fetching posts: ${errorMessage}`);
@@ -3006,7 +3035,6 @@ ${existingPostTitles}
         await processConcurrentPromiseQueue(jobs, updateSinglePost, onProgress, 3);
         
         addLog('🎉 Bulk update generation complete. Review and publish items from the Batch Progress view.');
-        dispatch({ type: 'FINISH_BATCH_GENERATION' });
         dispatch({ type: 'TOGGLE_MULTI_SELECT_MODE' }); // Exit multi-select mode after starting
 
     }, [state.selectedPosts, state.wpPosts, fetchWpContent, generatePostLogic, addLog]);
